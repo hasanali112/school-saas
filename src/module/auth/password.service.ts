@@ -3,7 +3,6 @@ import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 
 const KEY_LENGTH = 64;
 const SALT_LENGTH = 16;
-/** scrypt cost; ~50 ms on a laptop core, which is the point. */
 const SCRYPT_COST = 16_384;
 const FORMAT = 'scrypt';
 
