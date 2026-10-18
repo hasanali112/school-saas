@@ -22,7 +22,7 @@ import { AudienceRepository } from '../../../../application/ports/audience.repos
 
 /**
  * A read model across modules (students, academics, consent, users): one query
- * instead of a facade call per student. It only reads those tables, never writes them.
+ * instead of a service call per student. It only reads those tables, never writes them.
  */
 @Injectable()
 export class AudienceRelationalRepository implements AudienceRepository {

@@ -36,7 +36,7 @@ import { AuthService } from './services/auth.service';
     { provide: TokenSignerPort, useClass: JwtTokenSigner },
     { provide: OtpSenderPort, useClass: SmsOtpSender },
   ],
-  exports: [AuthFacade],
+  exports: [AuthService],
 })
 export class AuthModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

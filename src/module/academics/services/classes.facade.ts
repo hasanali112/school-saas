@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthUser } from '@module/auth/domain/auth-user';
-import type { SectionRef } from '../domain/school-class';
 import {
   ClassResponseDto,
   SectionResponseDto,
@@ -27,10 +26,5 @@ export class ClassesFacade {
 
   list(): Promise<ClassResponseDto[]> {
     return this.classes.list();
-  }
-
-  /** Every section with its class name; the student import matches rows against these. */
-  sectionRefs(): Promise<SectionRef[]> {
-    return this.classes.sectionRefs();
   }
 }

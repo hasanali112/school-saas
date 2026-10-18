@@ -10,7 +10,7 @@ import { RequestOtpDto } from '../dto/request-otp.dto';
 import { VerifyOtpDto } from '../dto/verify-otp.dto';
 import { AuthService } from './auth.service';
 
-/** Public API of the auth module: its controller, the auth middleware and the users module. */
+/** Connects the auth controller and the auth middleware to AuthService. */
 @Injectable()
 export class AuthFacade {
   constructor(private readonly auth: AuthService) {}
@@ -33,9 +33,5 @@ export class AuthFacade {
 
   authenticate(token: string): AuthUser | undefined {
     return this.auth.authenticate(token);
-  }
-
-  hashPassword(plain: string): Promise<string> {
-    return this.auth.hashPassword(plain);
   }
 }

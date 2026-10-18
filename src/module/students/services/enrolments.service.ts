@@ -10,8 +10,8 @@ import {
 } from '@common/services/database/database-errors';
 import { ClassSubjectRole } from '@module/academics/domain/subject';
 import type { OfferedSubject } from '@module/academics/domain/subject';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
-import { SubjectsFacade } from '@module/academics/services/subjects.facade';
+import { SessionsService } from '@module/academics/services/sessions.service';
+import { SubjectsService } from '@module/academics/services/subjects.service';
 import type { AuthUser } from '@module/auth/domain/auth-user';
 import type { Enrolment, RosterEntry } from '../domain/enrolment';
 import { StudentStatus } from '../domain/student';
@@ -30,8 +30,8 @@ export class EnrolmentsService {
   constructor(
     private readonly repo: EnrolmentsRepository,
     private readonly students: StudentsRepository,
-    private readonly sessions: SessionsFacade,
-    private readonly subjects: SubjectsFacade,
+    private readonly sessions: SessionsService,
+    private readonly subjects: SubjectsService,
   ) {}
 
   async enrol(

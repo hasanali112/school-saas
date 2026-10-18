@@ -11,7 +11,8 @@ Controller ──► Facade ──► Service ──► Port (abstract class) �
 
 - **Service talks to the Port**, never to TypeORM or a concrete repository.
 - **Repository implements the Port** (it is the adapter); it is the only code that touches TypeORM.
-- **Facade** is a module's public entry point, used by its own controllers and by other modules. It lives
+- **Facade** is the connector between a module's controllers and its services; nothing outside the module
+  uses it. It lives
   in `service/` next to the services it wraps.
 - **DTOs** of a module all live in its `dto/` folder.
 
@@ -23,7 +24,7 @@ Controller ──► Facade ──► Service ──► Port (abstract class) �
 | --- | --- | --- |
 | Persistence | Drizzle `*.schema.ts` + repositories calling `DatabaseService.tenant(tx => ...)` | TypeORM entities in `repository/entities/`, repositories implementing ports, one initial migration |
 | Types | `AttendanceRecordRow` etc. from `@database/schema` everywhere (61 imports) | Domain interfaces and enums in each module's `domain/`; entities `implements` them |
-| Dependencies | Services injected concrete repositories and other modules' services | Services inject ports (abstract classes) and other modules' facades |
+| Dependencies | Services injected concrete repositories and other modules' services | Services inject ports (abstract classes) and other modules' exported services |
 | Missing code | `@modules/*`, `@shared/*`, `@database/*`, `academics.module`, `app.setup.ts`, the JWT middleware and the database service were imported but did not exist | Rebuilt: shared kernel modules, `AcademicsModule`, `setupApp`, `JwtAuthMiddleware`, `DatabaseService` |
 | Existing ports | `SMS_GATEWAY` / `OTP_SENDER` symbols + interfaces | `SmsGatewayPort` / `OtpSenderPort` abstract classes |
 
@@ -44,7 +45,7 @@ students, sms) names files per resource instead of nesting sub-modules.
 
 ```text
 src/module/attendance/
-├── attendance.module.ts                       # imports the persistence module; services, facades; exports AttendanceFacade
+├── attendance.module.ts                       # imports the persistence module; services, facades; exports AttendanceService
 ├── application/ports/
 │   └── attendance.repository.port.ts          # abstract class AttendanceRepository
 ├── controllers/attendance.controller.ts       # HTTP only; calls the facade
@@ -133,12 +134,12 @@ export class AttendanceRelationalRepository implements AttendanceRepository {
 export class AttendanceService {
   constructor(
     private readonly repo: AttendanceRepository,
-    private readonly sessions: SessionsFacade,
-    private readonly holidays: HolidaysFacade,
-    private readonly teachers: TeachersFacade,     // "assigned sections only"
-    private readonly enrolments: EnrolmentsFacade, // the roster
-    private readonly leave: LeaveFacade,           // approved leave wins
-    private readonly users: UsersFacade,           // staff sheet
+    private readonly sessions: SessionsService,
+    private readonly holidays: HolidaysService,
+    private readonly teachers: TeachersService,     // "assigned sections only"
+    private readonly enrolments: EnrolmentsService, // the roster
+    private readonly leave: LeaveService,           // approved leave wins
+    private readonly users: UsersService,           // staff sheet
     private readonly audit: AuditLogPort,
     private readonly events: EventPublisherPort,
     private readonly clock: ClockPort,
@@ -147,19 +148,26 @@ export class AttendanceService {
 ```
 
 Attendance used to join enrolments, students, leave and teacher-assignment tables in its own SQL; it now
-asks those modules through their facades and only touches the attendance tables.
+asks those modules' services and only touches the attendance tables.
 
 ### Facade — `services/*.facade.ts`
 
-Thin delegation to the services beside it. Exported facades (what other modules may use):
+Thin delegation from the module's controllers (and, in auth, its middleware) to the services beside it.
+It is never exported and never used by another module.
 
-| Module | Exports |
-| --- | --- |
-| academics | `SessionsFacade` (`resolveId`), `ClassesFacade` (`sectionRefs`), `SubjectsFacade` (`offeredInSection`), `TeachersFacade` (`assignedSectionIds`), `HolidaysFacade` (`isHoliday`) |
-| students | `StudentsFacade`, `EnrolmentsFacade` (`rosterEntries`), `GuardiansFacade` |
-| auth | `AuthFacade` (`authenticate`, `hashPassword`) |
-| users / institutions / leave / attendance / consent | their facade (`UsersFacade.listActiveStaff`, `InstitutionsFacade.getCurrent`, `LeaveFacade.studentsOnApprovedLeave`) |
-| sms | `SmsFacade` (`sendTransactional`, `draftForSystem`) |
+### Module-to-module communication — services
+
+Modules talk service to service. Each module `exports` its services, and a service in another module injects
+them directly:
+
+| Module | Exports | Used by |
+| --- | --- | --- |
+| academics | `SessionsService`, `ShiftsService`, `ClassesService`, `SubjectsService`, `TeachersService`, `HolidaysService` | students (`resolveId`, `sectionRefs`, `offeredInSection`), sms (`resolveId`), attendance (`resolveId`, `isHoliday`, `assignedSectionIds`) |
+| students | `StudentsService`, `EnrolmentsService`, `GuardiansService`, `ImportService` | attendance (`EnrolmentsService.rosterEntries`) |
+| auth | `AuthService` | users (`hashPassword`) |
+| users / leave / institutions | `UsersService`, `LeaveService`, `InstitutionsService` | attendance (`listActiveStaff`, `studentsOnApprovedLeave`), sms (`getCurrent`) |
+| sms | `SmsService`, `BatchesService`, ... | auth (`SmsService.send` for OTPs); guardian notices go through `BatchesService.draftForSystem` |
+| attendance / consent | `AttendanceService`, `ConsentService` | (nobody yet) |
 
 Module dependency graph (no cycles): academics, institutions, leave, consent → none; sms → academics,
 institutions; auth → sms; users → auth; students → academics; attendance → academics, students, leave, users.
@@ -169,8 +177,8 @@ institutions; auth → sms; users → auth; students → academics; attendance �
 Three repositories read another module's tables, each with a comment saying why:
 
 - `auth.repository`: users and institutions, before a tenant is known (system role).
-- `teachers.repository`: a user's roles; calling `UsersFacade` would create a cycle (users → auth → sms → academics).
-- `sms/audience.repository`: the recipient list in one query (enrolments, students, sections, classes, guardians, consents, users) instead of one facade call per student.
+- `teachers.repository`: a user's roles; calling `UsersService` would create a cycle (users → auth → sms → academics).
+- `sms/audience.repository`: the recipient list in one query (enrolments, students, sections, classes, guardians, consents, users) instead of one service call per student.
 
 They never write those tables.
 

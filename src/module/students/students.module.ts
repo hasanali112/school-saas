@@ -37,6 +37,11 @@ import { StudentsService } from './services/students.service';
     ImportService,
     { provide: SpreadsheetPort, useClass: ExcelJsSpreadsheet },
   ],
-  exports: [StudentsFacade, EnrolmentsFacade, GuardiansFacade],
+  exports: [
+    StudentsService,
+    EnrolmentsService,
+    GuardiansService,
+    ImportService,
+  ],
 })
 export class StudentsModule {}

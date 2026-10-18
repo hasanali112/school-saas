@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthUser } from '@module/auth/domain/auth-user';
-import type { RosterEntry } from '../domain/enrolment';
 import { EnrolStudentDto } from '../dto/enrol-student.dto';
 import {
   EnrolmentResponseDto,
@@ -8,7 +7,6 @@ import {
 } from '../dto/enrolment.response.dto';
 import { EnrolmentsService } from './enrolments.service';
 
-/** Exported: attendance takes its sheet from the section roster. */
 @Injectable()
 export class EnrolmentsFacade {
   constructor(private readonly enrolments: EnrolmentsService) {}
@@ -27,9 +25,5 @@ export class EnrolmentsFacade {
 
   roster(sectionId: string, sessionId?: string): Promise<RosterResponseDto> {
     return this.enrolments.roster(sectionId, sessionId);
-  }
-
-  rosterEntries(sectionId: string, sessionId: string): Promise<RosterEntry[]> {
-    return this.enrolments.rosterEntries(sectionId, sessionId);
   }
 }

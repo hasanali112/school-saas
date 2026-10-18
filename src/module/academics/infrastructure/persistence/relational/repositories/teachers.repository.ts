@@ -28,7 +28,7 @@ export class TeachersRelationalRepository implements TeachersRepository {
 
   /**
    * Reads the users table (owned by the users module) because the users module
-   * depends on academics through auth → sms, so a facade call would be a cycle.
+   * depends on academics through auth → sms, so calling UsersService would be a cycle.
    */
   async findUserRoles(userId: string): Promise<Role[] | undefined> {
     const row = await this.db.tenant((m) =>

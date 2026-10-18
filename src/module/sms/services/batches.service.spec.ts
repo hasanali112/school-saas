@@ -9,9 +9,9 @@ import { AuthUser } from '@module/auth/domain/auth-user';
 import { Role } from '@module/auth/domain/role';
 import type { Institution } from '@module/institutions/domain/institution';
 import type { NewSmsBatch, SmsBatch, SmsMessage } from '../domain/sms-batch';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
+import { SessionsService } from '@module/academics/services/sessions.service';
 import { InstitutionResponseDto } from '@module/institutions/dto/institution.response.dto';
-import { InstitutionsFacade } from '@module/institutions/services/institutions.facade';
+import { InstitutionsService } from '@module/institutions/services/institutions.service';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
 import type {
   AuditEntry,
@@ -135,9 +135,9 @@ describe('BatchesService', () => {
     audit = getMock(moduleRef, AuditLogPort);
     templates = getMock(moduleRef, TemplatesService);
 
-    getMock(moduleRef, SessionsFacade).resolveId.mockResolvedValue('sess-1');
+    getMock(moduleRef, SessionsService).resolveId.mockResolvedValue('sess-1');
     getMock(moduleRef, ClockPort).today.mockReturnValue(TODAY);
-    getMock(moduleRef, InstitutionsFacade).getCurrent.mockResolvedValue(
+    getMock(moduleRef, InstitutionsService).getCurrent.mockResolvedValue(
       InstitutionResponseDto.from(institutionRow),
     );
     audienceService = getMock(moduleRef, AudienceService);

@@ -3,8 +3,8 @@ import { Test } from '@nestjs/testing';
 import { Workbook } from 'exceljs';
 import { AuthUser } from '@module/auth/domain/auth-user';
 import { Role } from '@module/auth/domain/role';
-import { ClassesFacade } from '@module/academics/services/classes.facade';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
+import { ClassesService } from '@module/academics/services/classes.service';
+import { SessionsService } from '@module/academics/services/sessions.service';
 import { createMock, getMock } from '@test/utils/create-mock';
 import {
   ExcelJsSpreadsheet,
@@ -63,7 +63,7 @@ const good = (
 describe('ImportService', () => {
   let service: ImportService;
   let repo: jest.Mocked<ImportRepository>;
-  let sessions: jest.Mocked<SessionsFacade>;
+  let sessions: jest.Mocked<SessionsService>;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -77,10 +77,10 @@ describe('ImportService', () => {
       .compile();
     service = moduleRef.get(ImportService);
     repo = getMock(moduleRef, ImportRepository);
-    sessions = getMock(moduleRef, SessionsFacade);
+    sessions = getMock(moduleRef, SessionsService);
 
     sessions.resolveId.mockResolvedValue('sess-1');
-    getMock(moduleRef, ClassesFacade).sectionRefs.mockResolvedValue([
+    getMock(moduleRef, ClassesService).sectionRefs.mockResolvedValue([
       { sectionId: 'sec-a', classId: 'c6', className: 'Six', sectionName: 'A' },
     ]);
     repo.findExisting.mockResolvedValue({

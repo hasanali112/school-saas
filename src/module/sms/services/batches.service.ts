@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { paginate, Paginated } from '@common/types/paginated';
 import { mapWithConcurrency } from '@common/utils/concurrency/map-with-concurrency';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
+import { SessionsService } from '@module/academics/services/sessions.service';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
 import type { AuthUser } from '@module/auth/domain/auth-user';
-import { InstitutionsFacade } from '@module/institutions/services/institutions.facade';
+import { InstitutionsService } from '@module/institutions/services/institutions.service';
 import { ClockPort } from '@module/time/application/ports/clock.port';
 import type { AudienceSelection } from '../domain/audience';
 import { countSegments, SmsEncoding } from '../domain/segments';
@@ -80,8 +80,8 @@ export class BatchesService {
     private readonly audience: AudienceService,
     private readonly templates: TemplatesService,
     private readonly balance: BalanceService,
-    private readonly sessions: SessionsFacade,
-    private readonly institutions: InstitutionsFacade,
+    private readonly sessions: SessionsService,
+    private readonly institutions: InstitutionsService,
     private readonly audit: AuditLogPort,
     private readonly gateway: SmsGatewayPort,
     private readonly clock: ClockPort,

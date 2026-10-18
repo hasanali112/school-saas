@@ -60,12 +60,4 @@ export class LeaveFacade {
   cancel(id: string, actor: AuthUser): Promise<LeaveApplicationResponseDto> {
     return this.leave.cancel(id, actor);
   }
-
-  /** Attendance marks these students as on leave whatever the teacher entered. */
-  studentsOnApprovedLeave(
-    studentIds: readonly string[],
-    date: string,
-  ): Promise<Set<string>> {
-    return this.leave.studentsOnApprovedLeave(studentIds, date);
-  }
 }

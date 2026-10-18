@@ -7,7 +7,7 @@ import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { isUniqueViolation } from '@common/services/database/database-errors';
 import { paginate, Paginated } from '@common/types/paginated';
 import type { AuthUser } from '@module/auth/domain/auth-user';
-import { AuthFacade } from '@module/auth/services/auth.facade';
+import { AuthService } from '@module/auth/services/auth.service';
 import { EventPublisherPort } from '@module/events/application/ports/event-publisher.port';
 import type { StaffMember, User } from '../domain/user';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -19,7 +19,7 @@ import { UsersRepository } from '../application/ports/users.repository.port';
 export class UsersService {
   constructor(
     private readonly repo: UsersRepository,
-    private readonly auth: AuthFacade,
+    private readonly auth: AuthService,
     private readonly events: EventPublisherPort,
   ) {}
 

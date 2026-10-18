@@ -9,6 +9,6 @@ import { UsersService } from './services/users.service';
   imports: [RelationalUsersPersistenceModule, AuthModule],
   controllers: [UsersController],
   providers: [UsersFacade, UsersService],
-  exports: [UsersFacade],
+  exports: [UsersService],
 })
 export class UsersModule {}

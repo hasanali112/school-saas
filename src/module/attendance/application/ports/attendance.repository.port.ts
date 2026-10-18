@@ -5,7 +5,7 @@ import type {
   StaffMark,
 } from '../../domain/attendance';
 
-/** Only the attendance tables; rosters, leave and teacher assignments come through facades. */
+/** Only the attendance tables; rosters, leave and teacher assignments come from the academics, students and leave services. */
 export abstract class AttendanceRepository {
   abstract findRecords(
     enrolmentIds: readonly string[],

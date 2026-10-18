@@ -4,7 +4,6 @@ import { SessionResponseDto } from '../dto/academics.response.dto';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { SessionsService } from './sessions.service';
 
-/** Exported: every session-scoped module resolves "the current session" through it. */
 @Injectable()
 export class SessionsFacade {
   constructor(private readonly sessions: SessionsService) {}
@@ -23,9 +22,5 @@ export class SessionsFacade {
 
   setCurrent(id: string): Promise<SessionResponseDto> {
     return this.sessions.setCurrent(id);
-  }
-
-  resolveId(sessionId?: string): Promise<string> {
-    return this.sessions.resolveId(sessionId);
   }
 }

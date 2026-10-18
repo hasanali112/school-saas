@@ -46,11 +46,12 @@ import { TeachersService } from './services/teachers.service';
     HolidaysService,
   ],
   exports: [
-    SessionsFacade,
-    ClassesFacade,
-    SubjectsFacade,
-    TeachersFacade,
-    HolidaysFacade,
+    SessionsService,
+    ShiftsService,
+    ClassesService,
+    SubjectsService,
+    TeachersService,
+    HolidaysService,
   ],
 })
 export class AcademicsModule {}

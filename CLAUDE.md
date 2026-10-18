@@ -35,12 +35,12 @@ per resource (`services/sessions.service.ts`, `application/ports/sessions.reposi
 
 ```text
 src/module/<name>/
-├── <name>.module.ts                  # imports its persistence module; provides services, facades, adapters; exports facades only
+├── <name>.module.ts                  # imports its persistence module; provides services, facades, adapters; exports its services
 ├── application/ports/                # abstract classes: XRepository (x.repository.port.ts) and other ports (ClockPort, SmsGatewayPort…)
-├── controllers/                      # HTTP only; call facades
+├── controllers/                      # HTTP only; call this module's facades
 ├── domain/                           # interfaces, enums, constants and pure functions; no Nest, no TypeORM
 ├── dto/                              # every DTO of the module: request, query, response, import rows
-├── services/                         # *.service.ts (rules) and *.facade.ts (public API)
+├── services/                         # *.service.ts (rules; what other modules use) and *.facade.ts (controller connector)
 ├── infrastructure/
 │   ├── persistence/relational/
 │   │   ├── entities/                 # @Entity classes (no domain types)
@@ -57,7 +57,8 @@ Rules that keep it clean:
 
 - Path aliases (tsconfig `paths`): `@common/*`, `@config/*`, `@module/*`, `@test/*`. Mirror any new alias in
   both Jest configs. Nest CLI rewrites them to relative requires in `dist/`.
-- Layer contract: controller (HTTP only) → facade (`services/*.facade.ts`, the module's public API) →
+- Layer contract: controller (HTTP only) → facade (`services/*.facade.ts`, the connector between this
+  module's controllers and its services; nothing outside the module uses it) →
   service (`services/*.service.ts`: rules, events, HTTP exceptions) → port (`application/ports/*.port.ts`) ←
   adapter (`infrastructure/persistence/relational/repositories/*` or `infrastructure/adapters/*`). Controllers
   call facades, never services or repositories.
@@ -67,12 +68,14 @@ Rules that keep it clean:
   bindings live in the module's `relational-persistence.module.ts`
   (`{ provide: XRepository, useClass: XRelationalRepository }`, exporting the ports); other adapters are bound
   in `<name>.module.ts`. Adapters `implements` (never `extends`) the port.
-- Inside a module, a service may use sibling services and sibling ports. Across modules, only facades:
-  a module `exports` its facades and nothing else (the shared kernel exports its ports). Never import
-  another module's service, port or repository.
+- Module-to-module communication is service to service: a module `exports` its services (never facades,
+  ports or repositories; the shared kernel exports its ports), and another module's service injects them
+  (`AttendanceService` injects `SessionsService`, `EnrolmentsService`, `LeaveService`...). Inside a module, a
+  service may use sibling services and sibling ports. Never import another module's facade, port or
+  repository.
 - Repository adapters are the only code that touches TypeORM. They go through `DatabaseService`
   (`db.tenant(m => ...)` or `db.system(m => ...)`), not `@InjectRepository`. They write only their own
-  module's tables. Reading another module's table is allowed only where a facade call would create a module
+  module's tables. Reading another module's table is allowed only where a service call would create a module
   cycle or an N+1, and the file says so: `auth.repository` (users, institutions before login),
   `teachers.repository` (user roles), `sms/audience.repository` (one recipient query). Do not add more
   without the same justification.
@@ -85,7 +88,7 @@ Rules that keep it clean:
 - Every error goes through `AllExceptionsFilter`, which also uses the envelope; codes come from the
   `HttpStatus` enum name (`NOT_FOUND`, `CONFLICT`) or `VALIDATION_ERROR` (with `details`).
 - Guards are global (`ThrottlerGuard`, `AuthGuard`, `RolesGuard`, in that order). `JwtAuthMiddleware`
-  (auth module, every route) verifies the bearer token through `AuthFacade`, sets `req.user` and opens the
+  (auth module, every route) verifies the bearer token through `AuthFacade` (the middleware is an inbound adapter of the auth module), sets `req.user` and opens the
   tenant context; a bad token leaves the request anonymous, so `AuthGuard` answers 401. Use `@Public()` for
   open routes and `@Roles([...])` for role gates, both from `@module/auth/decorators`. Resource-level checks
   (own section, own child) go in services. Roles are the `Role` enum in `@module/auth/domain/role`;
@@ -149,8 +152,8 @@ Rules that keep it clean:
   from `httpConfig`); wrap calls in `firstValueFrom`, map failures to `ServiceUnavailableException`, and
   never log request bodies that may contain codes or personal data.
 - SMS: guardian-facing messages go through `BatchesService` (consent, cost preview, ledger, log); other
-  modules use `SmsFacade.draftForSystem()` with a `dedupeKey` and let the office send; they never send
-  directly (Spec v2 §9: cost before send). `SmsFacade.sendTransactional()` is for OTPs only. Gateways
+  modules inject `BatchesService` and call `draftForSystem()` with a `dedupeKey` and let the office send; they
+  never send directly (Spec v2 §9: cost before send). `SmsService.send()` is for transactional traffic (OTPs) only. Gateways
   implement `SmsGatewayPort`. Money is in paisa integers; the `sms_ledger` table is append-only like the
   audit table. Fan-out uses `mapWithConcurrency` (`@common/utils/concurrency`).
 
@@ -211,7 +214,7 @@ Testing conventions:
   back with `getMock(moduleRef, Dep)` (typed `jest.Mocked<Dep>`; ports work as tokens). This exercises
   Nest's injector, so a missing `@Injectable()` or wrong port fails the spec. Direct `new Service()` is only
   for code with no DI at all (pure DTO/helper specs).
-- Mock ports and other modules' facades, never adapters. Provide a real adapter only when the spec is about
+- Mock ports and other modules' services, never adapters. Provide a real adapter only when the spec is about
   it (the import spec uses the real `ExcelJsSpreadsheet`). Mock `ClockPort` (`today`/`now`) wherever a rule
   depends on the date.
 - Provide real values only where a constructor reads config at construction time

@@ -49,9 +49,4 @@ export class TeachersFacade {
   ): Promise<MyAssignmentsResponseDto> {
     return this.teachers.myAssignments(actor, sessionId);
   }
-
-  /** Attendance limits teachers to these sections. */
-  assignedSectionIds(userId: string, sessionId: string): Promise<Set<string>> {
-    return this.teachers.assignedSectionIds(userId, sessionId);
-  }
 }

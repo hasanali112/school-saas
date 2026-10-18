@@ -6,8 +6,8 @@ import {
 import { Test } from '@nestjs/testing';
 import { ClassSubjectRole, Religion } from '@module/academics/domain/subject';
 import type { OfferedSubject } from '@module/academics/domain/subject';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
-import { SubjectsFacade } from '@module/academics/services/subjects.facade';
+import { SessionsService } from '@module/academics/services/sessions.service';
+import { SubjectsService } from '@module/academics/services/subjects.service';
 import type { AuthUser } from '@module/auth/domain/auth-user';
 import { Role } from '@module/auth/domain/role';
 import { createMock, getMock } from '@test/utils/create-mock';
@@ -79,8 +79,8 @@ describe('EnrolmentsService', () => {
   let service: EnrolmentsService;
   let repo: jest.Mocked<EnrolmentsRepository>;
   let students: jest.Mocked<StudentsRepository>;
-  let sessions: jest.Mocked<SessionsFacade>;
-  let subjects: jest.Mocked<SubjectsFacade>;
+  let sessions: jest.Mocked<SessionsService>;
+  let subjects: jest.Mocked<SubjectsService>;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -91,8 +91,8 @@ describe('EnrolmentsService', () => {
     service = moduleRef.get(EnrolmentsService);
     repo = getMock(moduleRef, EnrolmentsRepository);
     students = getMock(moduleRef, StudentsRepository);
-    sessions = getMock(moduleRef, SessionsFacade);
-    subjects = getMock(moduleRef, SubjectsFacade);
+    sessions = getMock(moduleRef, SessionsService);
+    subjects = getMock(moduleRef, SubjectsService);
 
     students.findById.mockResolvedValue(student);
     sessions.resolveId.mockResolvedValue('sess-1');

@@ -1,19 +1,19 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { HolidaysFacade } from '@module/academics/services/holidays.facade';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
-import { TeachersFacade } from '@module/academics/services/teachers.facade';
+import { HolidaysService } from '@module/academics/services/holidays.service';
+import { SessionsService } from '@module/academics/services/sessions.service';
+import { TeachersService } from '@module/academics/services/teachers.service';
 import type { AuditSnapshot } from '@module/audit/domain/audit-entry';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
 import type { AuthUser } from '@module/auth/domain/auth-user';
 import { Role } from '@module/auth/domain/role';
 import { EventPublisherPort } from '@module/events/application/ports/event-publisher.port';
-import { LeaveFacade } from '@module/leave/services/leave.facade';
+import { LeaveService } from '@module/leave/services/leave.service';
 import type { RosterEntry } from '@module/students/domain/enrolment';
 import { StudentStatus } from '@module/students/domain/student';
-import { EnrolmentsFacade } from '@module/students/services/enrolments.facade';
+import { EnrolmentsService } from '@module/students/services/enrolments.service';
 import { ClockPort } from '@module/time/application/ports/clock.port';
-import { UsersFacade } from '@module/users/services/users.facade';
+import { UsersService } from '@module/users/services/users.service';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { containing } from '@test/utils/matchers';
 import {
@@ -69,10 +69,10 @@ const record = (
 describe('AttendanceService', () => {
   let service: AttendanceService;
   let repo: jest.Mocked<AttendanceRepository>;
-  let holidays: jest.Mocked<HolidaysFacade>;
-  let teachers: jest.Mocked<TeachersFacade>;
-  let leave: jest.Mocked<LeaveFacade>;
-  let users: jest.Mocked<UsersFacade>;
+  let holidays: jest.Mocked<HolidaysService>;
+  let teachers: jest.Mocked<TeachersService>;
+  let leave: jest.Mocked<LeaveService>;
+  let users: jest.Mocked<UsersService>;
   let audit: jest.Mocked<AuditLogPort>;
   let events: jest.Mocked<EventPublisherPort>;
 
@@ -84,14 +84,14 @@ describe('AttendanceService', () => {
       .compile();
     service = moduleRef.get(AttendanceService);
     repo = getMock(moduleRef, AttendanceRepository);
-    holidays = getMock(moduleRef, HolidaysFacade);
-    teachers = getMock(moduleRef, TeachersFacade);
-    leave = getMock(moduleRef, LeaveFacade);
-    users = getMock(moduleRef, UsersFacade);
+    holidays = getMock(moduleRef, HolidaysService);
+    teachers = getMock(moduleRef, TeachersService);
+    leave = getMock(moduleRef, LeaveService);
+    users = getMock(moduleRef, UsersService);
     audit = getMock(moduleRef, AuditLogPort);
     events = getMock(moduleRef, EventPublisherPort);
-    getMock(moduleRef, SessionsFacade).resolveId.mockResolvedValue('sess');
-    getMock(moduleRef, EnrolmentsFacade).rosterEntries.mockResolvedValue(
+    getMock(moduleRef, SessionsService).resolveId.mockResolvedValue('sess');
+    getMock(moduleRef, EnrolmentsService).rosterEntries.mockResolvedValue(
       roster,
     );
     getMock(moduleRef, ClockPort).today.mockReturnValue(TODAY);

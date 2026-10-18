@@ -9,6 +9,6 @@ import { ConsentService } from './services/consent.service';
   imports: [RelationalConsentPersistenceModule],
   controllers: [ConsentController],
   providers: [ConsentFacade, ConsentService],
-  exports: [ConsentFacade],
+  exports: [ConsentService],
 })
 export class ConsentModule {}

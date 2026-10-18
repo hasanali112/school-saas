@@ -9,6 +9,6 @@ import { LeaveService } from './services/leave.service';
   imports: [RelationalLeavePersistenceModule],
   controllers: [LeaveController],
   providers: [LeaveFacade, LeaveService],
-  exports: [LeaveFacade],
+  exports: [LeaveService],
 })
 export class LeaveModule {}

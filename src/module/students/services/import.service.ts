@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import type { SectionRef } from '@module/academics/domain/school-class';
-import { ClassesFacade } from '@module/academics/services/classes.facade';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
+import { ClassesService } from '@module/academics/services/classes.service';
+import { SessionsService } from '@module/academics/services/sessions.service';
 import type { AuthUser } from '@module/auth/domain/auth-user';
 import { rollKey, sectionKey } from '../domain/import';
 import type {
@@ -53,8 +53,8 @@ export class ImportService {
   constructor(
     private readonly repo: ImportRepository,
     private readonly spreadsheet: SpreadsheetPort,
-    private readonly sessions: SessionsFacade,
-    private readonly classes: ClassesFacade,
+    private readonly sessions: SessionsService,
+    private readonly classes: ClassesService,
   ) {}
 
   template(): Promise<Buffer> {

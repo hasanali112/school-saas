@@ -19,9 +19,4 @@ export class HolidaysFacade {
   remove(id: string): Promise<void> {
     return this.holidays.remove(id);
   }
-
-  /** Attendance refuses to mark on a holiday. */
-  isHoliday(date: string): Promise<boolean> {
-    return this.holidays.isHoliday(date);
-  }
 }

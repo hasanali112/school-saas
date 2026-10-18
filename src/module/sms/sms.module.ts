@@ -18,7 +18,6 @@ import { BatchesFacade } from './services/batches.facade';
 import { BatchesService } from './services/batches.service';
 import { DeliveryReportsFacade } from './services/delivery-reports.facade';
 import { DeliveryReportsService } from './services/delivery-reports.service';
-import { SmsFacade } from './services/sms.facade';
 import { SmsService } from './services/sms.service';
 import { TemplatesFacade } from './services/templates.facade';
 import { TemplatesService } from './services/templates.service';
@@ -49,7 +48,6 @@ import { TemplatesService } from './services/templates.service';
   ],
   providers: [
     smsGatewayProvider,
-    SmsFacade,
     SmsService,
     AudienceService,
     TemplatesFacade,
@@ -62,6 +60,13 @@ import { TemplatesService } from './services/templates.service';
     DeliveryReportsService,
     AbsenceSmsListener,
   ],
-  exports: [SmsFacade],
+  exports: [
+    SmsService,
+    AudienceService,
+    TemplatesService,
+    BalanceService,
+    BatchesService,
+    DeliveryReportsService,
+  ],
 })
 export class SmsModule {}

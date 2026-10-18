@@ -3,19 +3,19 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { HolidaysFacade } from '@module/academics/services/holidays.facade';
-import { SessionsFacade } from '@module/academics/services/sessions.facade';
-import { TeachersFacade } from '@module/academics/services/teachers.facade';
+import { HolidaysService } from '@module/academics/services/holidays.service';
+import { SessionsService } from '@module/academics/services/sessions.service';
+import { TeachersService } from '@module/academics/services/teachers.service';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
 import type { AuthUser } from '@module/auth/domain/auth-user';
 import { Role } from '@module/auth/domain/role';
 import { EventPublisherPort } from '@module/events/application/ports/event-publisher.port';
-import { LeaveFacade } from '@module/leave/services/leave.facade';
+import { LeaveService } from '@module/leave/services/leave.service';
 import type { RosterEntry } from '@module/students/domain/enrolment';
-import { EnrolmentsFacade } from '@module/students/services/enrolments.facade';
+import { EnrolmentsService } from '@module/students/services/enrolments.service';
 import { isMonth, monthBounds } from '@module/time/domain/local-date';
 import { ClockPort } from '@module/time/application/ports/clock.port';
-import { UsersFacade } from '@module/users/services/users.facade';
+import { UsersService } from '@module/users/services/users.service';
 import {
   AttendanceStatus,
   PRESENT_STATUSES,
@@ -59,12 +59,12 @@ interface MonthData {
 export class AttendanceService {
   constructor(
     private readonly repo: AttendanceRepository,
-    private readonly sessions: SessionsFacade,
-    private readonly holidays: HolidaysFacade,
-    private readonly teachers: TeachersFacade,
-    private readonly enrolments: EnrolmentsFacade,
-    private readonly leave: LeaveFacade,
-    private readonly users: UsersFacade,
+    private readonly sessions: SessionsService,
+    private readonly holidays: HolidaysService,
+    private readonly teachers: TeachersService,
+    private readonly enrolments: EnrolmentsService,
+    private readonly leave: LeaveService,
+    private readonly users: UsersService,
     private readonly audit: AuditLogPort,
     private readonly events: EventPublisherPort,
     private readonly clock: ClockPort,

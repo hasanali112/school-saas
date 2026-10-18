@@ -8,6 +8,6 @@ import { InstitutionsService } from './services/institutions.service';
   imports: [RelationalInstitutionsPersistenceModule],
   controllers: [InstitutionsController],
   providers: [InstitutionsFacade, InstitutionsService],
-  exports: [InstitutionsFacade],
+  exports: [InstitutionsService],
 })
 export class InstitutionsModule {}

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthUser } from '@module/auth/domain/auth-user';
-import type { OfferedSubject } from '../domain/subject';
 import { AttachClassSubjectDto } from '../dto/attach-class-subject.dto';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import {
@@ -35,10 +34,5 @@ export class SubjectsFacade {
 
   listForClass(classId: string): Promise<ClassSubjectResponseDto[]> {
     return this.subjects.listForClass(classId);
-  }
-
-  /** Enrolment validates a student's 4th and religion subject against these. */
-  offeredInSection(sectionId: string): Promise<OfferedSubject[]> {
-    return this.subjects.offeredInSection(sectionId);
   }
 }
