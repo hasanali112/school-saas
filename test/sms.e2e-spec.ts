@@ -9,16 +9,16 @@ import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
 import type { Institution } from '@module/institutions/domain/institution';
 import type { SmsBatch, SmsMessage } from '@module/sms/domain/sms-batch';
-import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
-import { ConsentRepositoryPort } from '@module/consent/port/consent.repository.port';
-import { InstitutionsRepositoryPort } from '@module/institutions/port/institutions.repository.port';
-import { AudienceRepositoryPort } from '@module/sms/port/audience.repository.port';
-import { BalanceRepositoryPort } from '@module/sms/port/balance.repository.port';
-import { BatchesRepositoryPort } from '@module/sms/port/batches.repository.port';
-import { DeliveryReportsRepositoryPort } from '@module/sms/port/delivery-reports.repository.port';
-import { SmsGatewayPort } from '@module/sms/port/sms-gateway.port';
-import { TemplatesRepositoryPort } from '@module/sms/port/templates.repository.port';
-import { AuditLogPort } from '@module/audit/port/audit-log.port';
+import { SessionsRepository } from '@module/academics/application/ports/sessions.repository.port';
+import { ConsentRepository } from '@module/consent/application/ports/consent.repository.port';
+import { InstitutionsRepository } from '@module/institutions/application/ports/institutions.repository.port';
+import { AudienceRepository } from '@module/sms/application/ports/audience.repository.port';
+import { BalanceRepository } from '@module/sms/application/ports/balance.repository.port';
+import { BatchesRepository } from '@module/sms/application/ports/batches.repository.port';
+import { DeliveryReportsRepository } from '@module/sms/application/ports/delivery-reports.repository.port';
+import { SmsGatewayPort } from '@module/sms/application/ports/sms-gateway.port';
+import { TemplatesRepository } from '@module/sms/application/ports/templates.repository.port';
+import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
 import { ConsentPurpose, ConsentSource } from '@module/consent/domain/consent';
 import type { Consent } from '@module/consent/domain/consent';
 import {
@@ -92,36 +92,36 @@ describe('SMS & consent (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const audience = createMock<AudienceRepositoryPort>();
-  const balance = createMock<BalanceRepositoryPort>();
-  const batches = createMock<BatchesRepositoryPort>();
-  const templates = createMock<TemplatesRepositoryPort>();
-  const consent = createMock<ConsentRepositoryPort>();
-  const delivery = createMock<DeliveryReportsRepositoryPort>();
+  const audience = createMock<AudienceRepository>();
+  const balance = createMock<BalanceRepository>();
+  const batches = createMock<BatchesRepository>();
+  const templates = createMock<TemplatesRepository>();
+  const consent = createMock<ConsentRepository>();
+  const delivery = createMock<DeliveryReportsRepository>();
   const gateway = createMock<SmsGatewayPort>();
-  const sessions = createMock<SessionsRepositoryPort>();
-  const institutions = createMock<InstitutionsRepositoryPort>();
+  const sessions = createMock<SessionsRepository>();
+  const institutions = createMock<InstitutionsRepository>();
 
   beforeAll(async () => {
     process.env.SMS_DELIVERY_REPORT_SECRET = DLR_SECRET;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(AudienceRepositoryPort)
+      .overrideProvider(AudienceRepository)
       .useValue(audience)
-      .overrideProvider(BalanceRepositoryPort)
+      .overrideProvider(BalanceRepository)
       .useValue(balance)
-      .overrideProvider(BatchesRepositoryPort)
+      .overrideProvider(BatchesRepository)
       .useValue(batches)
-      .overrideProvider(TemplatesRepositoryPort)
+      .overrideProvider(TemplatesRepository)
       .useValue(templates)
-      .overrideProvider(ConsentRepositoryPort)
+      .overrideProvider(ConsentRepository)
       .useValue(consent)
-      .overrideProvider(DeliveryReportsRepositoryPort)
+      .overrideProvider(DeliveryReportsRepository)
       .useValue(delivery)
       .overrideProvider(SmsGatewayPort)
       .useValue(gateway)
-      .overrideProvider(SessionsRepositoryPort)
+      .overrideProvider(SessionsRepository)
       .useValue(sessions)
-      .overrideProvider(InstitutionsRepositoryPort)
+      .overrideProvider(InstitutionsRepository)
       .useValue(institutions)
       .overrideProvider(AuditLogPort)
       .useValue(createMock<AuditLogPort>())

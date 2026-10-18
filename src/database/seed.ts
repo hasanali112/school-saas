@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { ScryptPasswordHasher } from '../module/auth/adapter/scrypt.password-hasher';
+import { ScryptPasswordHasher } from '@module/auth/infrastructure/adapters/scrypt.password-hasher';
 import { Role } from '../module/auth/domain/role';
-import { InstitutionEntity } from '../module/institutions/repository/entities/institution.entity';
-import { UserEntity } from '../module/users/repository/entities/user.entity';
+import { InstitutionEntity } from '@module/institutions/infrastructure/persistence/relational/entities/institution.entity';
+import { UserEntity } from '@module/users/infrastructure/persistence/relational/entities/user.entity';
 import dataSource from './data-source';
 
 /**

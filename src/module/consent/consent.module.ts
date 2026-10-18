@@ -1,21 +1,14 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConsentController } from './controller/consent.controller';
-import { ConsentRepositoryPort } from './port/consent.repository.port';
-import { ConsentRepository } from './repository/consent.repository';
-import { ConsentEntity } from './repository/entities/consent.entity';
-import { ConsentFacade } from './service/consent.facade';
-import { ConsentService } from './service/consent.service';
+import { RelationalConsentPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { ConsentController } from './controllers/consent.controller';
+import { ConsentFacade } from './services/consent.facade';
+import { ConsentService } from './services/consent.service';
 
 /** F1-15 (minimal): per-purpose guardian consent. The SMS audience reads the table directly. */
 @Module({
-  imports: [TypeOrmModule.forFeature([ConsentEntity])],
+  imports: [RelationalConsentPersistenceModule],
   controllers: [ConsentController],
-  providers: [
-    ConsentFacade,
-    ConsentService,
-    { provide: ConsentRepositoryPort, useClass: ConsentRepository },
-  ],
+  providers: [ConsentFacade, ConsentService],
   exports: [ConsentFacade],
 })
 export class ConsentModule {}

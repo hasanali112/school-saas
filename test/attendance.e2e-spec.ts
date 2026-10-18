@@ -8,23 +8,23 @@ import { ApiResponse } from '@common/types/api-response';
 import { Role } from '@module/auth/domain/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
-import { HolidaysRepositoryPort } from '@module/academics/port/holidays.repository.port';
-import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
-import { TeachersRepositoryPort } from '@module/academics/port/teachers.repository.port';
+import { HolidaysRepository } from '@module/academics/application/ports/holidays.repository.port';
+import { SessionsRepository } from '@module/academics/application/ports/sessions.repository.port';
+import { TeachersRepository } from '@module/academics/application/ports/teachers.repository.port';
 import { AttendanceStatus } from '@module/attendance/domain/attendance';
 import type { AttendanceRecord } from '@module/attendance/domain/attendance';
-import { AttendanceRepositoryPort } from '@module/attendance/port/attendance.repository.port';
-import { AuditLogPort } from '@module/audit/port/audit-log.port';
+import { AttendanceRepository } from '@module/attendance/application/ports/attendance.repository.port';
+import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
 import {
   ApplicantKind,
   LeaveAppliesTo,
   LeaveStatus,
 } from '@module/leave/domain/leave';
 import type { LeaveApplication } from '@module/leave/domain/leave';
-import { LeaveRepositoryPort } from '@module/leave/port/leave.repository.port';
+import { LeaveRepository } from '@module/leave/application/ports/leave.repository.port';
 import type { RosterRow } from '@module/students/domain/enrolment';
 import { StudentStatus } from '@module/students/domain/student';
-import { EnrolmentsRepositoryPort } from '@module/students/port/enrolments.repository.port';
+import { EnrolmentsRepository } from '@module/students/application/ports/enrolments.repository.port';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -74,27 +74,27 @@ describe('Attendance & leave (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const attendance = createMock<AttendanceRepositoryPort>();
-  const leave = createMock<LeaveRepositoryPort>();
-  const sessions = createMock<SessionsRepositoryPort>();
-  const holidays = createMock<HolidaysRepositoryPort>();
-  const teachers = createMock<TeachersRepositoryPort>();
-  const enrolments = createMock<EnrolmentsRepositoryPort>();
+  const attendance = createMock<AttendanceRepository>();
+  const leave = createMock<LeaveRepository>();
+  const sessions = createMock<SessionsRepository>();
+  const holidays = createMock<HolidaysRepository>();
+  const teachers = createMock<TeachersRepository>();
+  const enrolments = createMock<EnrolmentsRepository>();
   const audit = createMock<AuditLogPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(AttendanceRepositoryPort)
+      .overrideProvider(AttendanceRepository)
       .useValue(attendance)
-      .overrideProvider(LeaveRepositoryPort)
+      .overrideProvider(LeaveRepository)
       .useValue(leave)
-      .overrideProvider(SessionsRepositoryPort)
+      .overrideProvider(SessionsRepository)
       .useValue(sessions)
-      .overrideProvider(HolidaysRepositoryPort)
+      .overrideProvider(HolidaysRepository)
       .useValue(holidays)
-      .overrideProvider(TeachersRepositoryPort)
+      .overrideProvider(TeachersRepository)
       .useValue(teachers)
-      .overrideProvider(EnrolmentsRepositoryPort)
+      .overrideProvider(EnrolmentsRepository)
       .useValue(enrolments)
       .overrideProvider(AuditLogPort)
       .useValue(audit)

@@ -2,15 +2,15 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
-import { ScryptPasswordHasher } from '@module/auth/adapter/scrypt.password-hasher';
+import { ScryptPasswordHasher } from '@module/auth/infrastructure/adapters/scrypt.password-hasher';
 import { ApiResponse } from '@common/types/api-response';
 import { Role } from '@module/auth/domain/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
 import { UserStatus } from '@module/users/domain/user';
 import type { User } from '@module/users/domain/user';
-import { AuthRepositoryPort } from '@module/auth/port/auth.repository.port';
-import { OtpSenderPort } from '@module/auth/port/otp-sender.port';
+import { AuthRepository } from '@module/auth/application/ports/auth.repository.port';
+import { OtpSenderPort } from '@module/auth/application/ports/otp-sender.port';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -23,12 +23,12 @@ describe('Auth (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const repo = createMock<AuthRepositoryPort>();
+  const repo = createMock<AuthRepository>();
   const sender = createMock<OtpSenderPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(AuthRepositoryPort)
+      .overrideProvider(AuthRepository)
       .useValue(repo)
       .overrideProvider(OtpSenderPort)
       .useValue(sender)
