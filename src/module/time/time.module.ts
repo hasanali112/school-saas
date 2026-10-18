@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
-import { SystemClock } from './adapter/system.clock';
-import { ClockPort } from './port/clock.port';
+import { SystemClock } from './infrastructure/adapters/system.clock';
+import { ClockPort } from './application/ports/clock.port';
 
 /** Shared kernel: every module can inject `ClockPort` without importing this module. */
 @Global()

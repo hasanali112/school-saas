@@ -39,84 +39,100 @@ Bugs found and fixed on the way:
 
 ## 2. Module layout (as built)
 
-One set of folders per Nest module; a module with several resources (academics, students, sms) names
-files per resource instead of nesting sub-modules.
+Every module, including the shared kernel, has the same tree. A module with several resources (academics,
+students, sms) names files per resource instead of nesting sub-modules.
 
 ```text
 src/module/attendance/
-├── attendance.module.ts                   # binds ports to adapters, exports AttendanceFacade only
-├── controller/attendance.controller.ts    # HTTP only; calls the facade
-├── dto/                                   # request, query and response DTOs
-├── domain/attendance.ts                   # enum AttendanceStatus, interfaces, constants
-├── port/attendance.repository.port.ts     # abstract class AttendanceRepositoryPort
-├── service/
+├── attendance.module.ts                       # imports the persistence module; services, facades; exports AttendanceFacade
+├── application/ports/
+│   └── attendance.repository.port.ts          # abstract class AttendanceRepository
+├── controllers/attendance.controller.ts       # HTTP only; calls the facade
+├── domain/attendance.ts                       # enum AttendanceStatus, interfaces, constants
+├── dto/                                       # request, query and response DTOs
+├── services/
 │   ├── attendance.facade.ts
 │   ├── attendance.service.ts
 │   └── attendance.service.spec.ts
-├── repository/
-│   ├── attendance.repository.ts           # implements AttendanceRepositoryPort
-│   └── entities/attendance-record.entity.ts, staff-attendance.entity.ts
+├── infrastructure/persistence/relational/
+│   ├── entities/attendance-record.entity.ts, staff-attendance.entity.ts
+│   ├── mappers/attendance-record.mapper.ts, staff-attendance.mapper.ts
+│   ├── repositories/attendance.repository.ts  # AttendanceRelationalRepository implements AttendanceRepository
+│   └── relational-persistence.module.ts       # RelationalAttendancePersistenceModule
 └── events/attendance-marked.event.ts
 ```
 
-Changes from the original plan, decided while building it:
+`relational-persistence.module.ts` is the only place a repository port is bound:
 
-- **Non-database adapters go in `adapter/`** (SMS gateways, scrypt hasher, JWT signer, SMS OTP sender,
-  ExcelJS spreadsheet, system clock, event emitter). Inbound adapters get their own folder:
-  `listener/` (absence SMS) and `middleware/` (JWT auth).
+```ts
+@Module({
+  imports: [TypeOrmModule.forFeature([AttendanceRecordEntity, StaffAttendanceEntity])],
+  providers: [{ provide: AttendanceRepository, useClass: AttendanceRelationalRepository }],
+  exports: [AttendanceRepository],
+})
+export class RelationalAttendancePersistenceModule {}
+```
+
+Decisions made while building it:
+
+- **Non-database adapters go in `infrastructure/adapters/`** (SMS gateways, scrypt hasher, JWT signer, SMS OTP
+  sender, ExcelJS spreadsheet, system clock, event emitter). Inbound adapters other than controllers get
+  their own folder: `listeners/` (absence SMS) and `middleware/` (JWT auth).
 - **Academics is one module** at `src/module/academics/` with six resources (sessions, shifts, classes,
   subjects, teachers, holidays), each with its own service, facade, port and repository. The loose
   `src/module/dto/` folder became `academics/dto/`.
-- **No mappers.** Entities `implements` the domain interface, so a repository returns them typed as the
-  domain type. Response DTOs still map fields explicitly.
+- **Mappers separate entities from the domain.** Entities do not implement domain types; every repository
+  converts rows with `XMapper.toDomain()` and builds inserts with `XMapper.toPersistence()`.
 - **Repositories use `DatabaseService`, not `@InjectRepository`**, because every query has to run inside
   the RLS transaction it opens (`tenant()` / `system()`).
 
 ## 3. The building blocks
 
-### Port — `port/*.port.ts`
+### Port — `application/ports/*.port.ts`
 
 ```ts
-export abstract class AttendanceRepositoryPort {
+export abstract class AttendanceRepository {
   abstract findRecords(enrolmentIds: readonly string[], date: string, period: number): Promise<AttendanceRecord[]>;
   abstract upsertMany(rows: readonly NewAttendanceRecord[], actorId: string): Promise<AttendanceRecord[]>;
   // ...
 }
 ```
 
-Only abstract members; the class is the DI token. Every port in the codebase:
+Only abstract members; the class is the DI token. Repository ports are named `XRepository` and their
+TypeORM adapters `XRelationalRepository`. Every port in the codebase:
 
 | Module | Ports |
 | --- | --- |
 | shared kernel | `AuditLogPort`, `EventPublisherPort`, `ClockPort` |
-| academics | `SessionsRepositoryPort`, `ShiftsRepositoryPort`, `ClassesRepositoryPort`, `SubjectsRepositoryPort`, `TeachersRepositoryPort`, `HolidaysRepositoryPort` |
-| auth | `AuthRepositoryPort`, `PasswordHasherPort`, `TokenSignerPort`, `OtpSenderPort` |
+| academics | `SessionsRepository`, `ShiftsRepository`, `ClassesRepository`, `SubjectsRepository`, `TeachersRepository`, `HolidaysRepository` |
+| auth | `AuthRepository`, `PasswordHasherPort`, `TokenSignerPort`, `OtpSenderPort` |
 | users / institutions / leave / attendance / consent | one repository port each |
-| students | `StudentsRepositoryPort`, `EnrolmentsRepositoryPort`, `GuardiansRepositoryPort`, `ImportRepositoryPort`, `SpreadsheetPort` |
-| sms | `SmsGatewayPort`, `TemplatesRepositoryPort`, `BatchesRepositoryPort`, `BalanceRepositoryPort`, `AudienceRepositoryPort`, `DeliveryReportsRepositoryPort` |
+| students | `StudentsRepository`, `EnrolmentsRepository`, `GuardiansRepository`, `ImportRepository`, `SpreadsheetPort` |
+| sms | `SmsGatewayPort`, `TemplatesRepository`, `BatchesRepository`, `BalanceRepository`, `AudienceRepository`, `DeliveryReportsRepository` |
 
-### Repository — `repository/*.repository.ts`
+### Repository — `infrastructure/persistence/relational/repositories/*.repository.ts`
 
 ```ts
 @Injectable()
-export class AttendanceRepository implements AttendanceRepositoryPort {
+export class AttendanceRelationalRepository implements AttendanceRepository {
   constructor(private readonly db: DatabaseService) {}
 
-  findMonth(sectionId: string, sessionId: string, from: string, to: string): Promise<AttendanceRecord[]> {
-    return this.db.tenant((m) =>
+  async findMonth(sectionId: string, sessionId: string, from: string, to: string): Promise<AttendanceRecord[]> {
+    const rows = await this.db.tenant((m) =>
       m.findBy(AttendanceRecordEntity, { sectionId, sessionId, date: Between(from, to) }),
     );
+    return rows.map((row) => AttendanceRecordMapper.toDomain(row));
   }
 }
 ```
 
-### Service — `service/*.service.ts`
+### Service — `services/*.service.ts`
 
 ```ts
 @Injectable()
 export class AttendanceService {
   constructor(
-    private readonly repo: AttendanceRepositoryPort,
+    private readonly repo: AttendanceRepository,
     private readonly sessions: SessionsFacade,
     private readonly holidays: HolidaysFacade,
     private readonly teachers: TeachersFacade,     // "assigned sections only"
@@ -133,7 +149,7 @@ export class AttendanceService {
 Attendance used to join enrolments, students, leave and teacher-assignment tables in its own SQL; it now
 asks those modules through their facades and only touches the attendance tables.
 
-### Facade — `service/*.facade.ts`
+### Facade — `services/*.facade.ts`
 
 Thin delegation to the services beside it. Exported facades (what other modules may use):
 
@@ -164,7 +180,7 @@ They never write those tables.
 | --- | --- |
 | `module/time` | `ClockPort` (`today()` in Asia/Dhaka, `now()`), `todayLocal`, `monthBounds`, `isMonth` |
 | `module/events` | `DomainEvent` base, `EventPublisherPort` over `@nestjs/event-emitter` |
-| `module/audit` | `AuditLogPort`, `audit_log` entity (append-only) |
+| `module/audit` | `AuditLogPort`, `audit_log` entity (append-only), its own `relational-persistence.module.ts` |
 | `common/services/database` | `DatabaseService` (`tenant()` / `system()`), tenant context, `SnakeNamingStrategy`, `isUniqueViolation` / `isForeignKeyViolation` |
 
 All three modules are `@Global()` and export their port.
@@ -186,12 +202,12 @@ All three modules are `@Global()` and export their port.
 - E2E specs override ports and replace the TypeORM `DataSource` with `fakeDataSource()`.
 - `@nestjs/typeorm` 12 is ESM-only; both Jest configs compile it with ts-jest and stub its one
   `import.meta` file (`test/utils/typeorm-compat.stub.ts`).
-- New specs: `local-date.spec.ts`, `AuthService.authenticate`, attendance sheet merge and staff sheet.
+- New specs: `local-date.spec.ts`, `AuthService.authenticate`, attendance sheet merge and staff sheet, `StudentMapper`.
 
 ## 7. How it was verified
 
 - `yarn typecheck`, `yarn lint`, `yarn build`: clean.
-- `yarn test`: 25 suites, 144 tests pass. `yarn test:e2e`: 6 suites, 38 tests pass.
+- `yarn test`: 26 suites, 146 tests pass. `yarn test:e2e`: 6 suites, 38 tests pass.
 - Against a real PostgreSQL 16: the migration runs, reverts and runs again; `yarn typeorm schema:log` reports
   only the composite foreign keys (which entities cannot declare); the built app was driven through every
   module over HTTP (login and OTP, academics setup, students, enrolment, guardians, consent, import, leave,

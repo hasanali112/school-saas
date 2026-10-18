@@ -7,10 +7,10 @@ import { ApiResponse } from '@common/types/api-response';
 import { Role } from '@module/auth/domain/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
-import { HolidaysRepositoryPort } from '@module/academics/port/holidays.repository.port';
-import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
-import { SubjectsRepositoryPort } from '@module/academics/port/subjects.repository.port';
-import { TeachersRepositoryPort } from '@module/academics/port/teachers.repository.port';
+import { HolidaysRepository } from '@module/academics/application/ports/holidays.repository.port';
+import { SessionsRepository } from '@module/academics/application/ports/sessions.repository.port';
+import { SubjectsRepository } from '@module/academics/application/ports/subjects.repository.port';
+import { TeachersRepository } from '@module/academics/application/ports/teachers.repository.port';
 import {
   ClassSubjectRole,
   SubjectKind,
@@ -32,20 +32,20 @@ describe('Institution setup (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const subjects = createMock<SubjectsRepositoryPort>();
-  const teachers = createMock<TeachersRepositoryPort>();
-  const sessions = createMock<SessionsRepositoryPort>();
-  const holidays = createMock<HolidaysRepositoryPort>();
+  const subjects = createMock<SubjectsRepository>();
+  const teachers = createMock<TeachersRepository>();
+  const sessions = createMock<SessionsRepository>();
+  const holidays = createMock<HolidaysRepository>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(SubjectsRepositoryPort)
+      .overrideProvider(SubjectsRepository)
       .useValue(subjects)
-      .overrideProvider(TeachersRepositoryPort)
+      .overrideProvider(TeachersRepository)
       .useValue(teachers)
-      .overrideProvider(SessionsRepositoryPort)
+      .overrideProvider(SessionsRepository)
       .useValue(sessions)
-      .overrideProvider(HolidaysRepositoryPort)
+      .overrideProvider(HolidaysRepository)
       .useValue(holidays)
       .overrideProvider(DataSource)
       .useValue(fakeDataSource())

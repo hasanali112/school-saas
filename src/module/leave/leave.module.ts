@@ -1,24 +1,14 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { LeaveController } from './controller/leave.controller';
-import { LeaveRepositoryPort } from './port/leave.repository.port';
-import { LeaveApplicationEntity } from './repository/entities/leave-application.entity';
-import { LeaveTypeEntity } from './repository/entities/leave-type.entity';
-import { LeaveRepository } from './repository/leave.repository';
-import { LeaveFacade } from './service/leave.facade';
-import { LeaveService } from './service/leave.service';
+import { RelationalLeavePersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { LeaveController } from './controllers/leave.controller';
+import { LeaveFacade } from './services/leave.facade';
+import { LeaveService } from './services/leave.service';
 
 /** F1-05: leave types, applications and approvals for staff and students. */
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([LeaveTypeEntity, LeaveApplicationEntity]),
-  ],
+  imports: [RelationalLeavePersistenceModule],
   controllers: [LeaveController],
-  providers: [
-    LeaveFacade,
-    LeaveService,
-    { provide: LeaveRepositoryPort, useClass: LeaveRepository },
-  ],
+  providers: [LeaveFacade, LeaveService],
   exports: [LeaveFacade],
 })
 export class LeaveModule {}

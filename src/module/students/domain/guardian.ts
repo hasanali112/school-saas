@@ -26,6 +26,14 @@ export interface StudentGuardian {
   createdAt: Date;
 }
 
+export interface NewStudentGuardian {
+  institutionId: string;
+  studentId: string;
+  guardianId: string;
+  relation: GuardianRelation;
+  isPrimary: boolean;
+}
+
 export interface LinkInput {
   institutionId: string;
   studentId: string;

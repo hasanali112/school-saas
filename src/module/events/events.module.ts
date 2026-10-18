@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { EventEmitterPublisher } from './adapter/event-emitter.publisher';
-import { EventPublisherPort } from './port/event-publisher.port';
+import { EventEmitterPublisher } from './infrastructure/adapters/event-emitter.publisher';
+import { EventPublisherPort } from './application/ports/event-publisher.port';
 
 /** Shared kernel: `EventPublisherPort` over `@nestjs/event-emitter`. */
 @Global()

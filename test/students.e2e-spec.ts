@@ -7,7 +7,7 @@ import { ApiResponse } from '@common/types/api-response';
 import { Role } from '@module/auth/domain/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
-import { StudentsRepositoryPort } from '@module/students/port/students.repository.port';
+import { StudentsRepository } from '@module/students/application/ports/students.repository.port';
 import { StudentStatus } from '@module/students/domain/student';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
@@ -26,11 +26,11 @@ describe('Students (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const repo = createMock<StudentsRepositoryPort>();
+  const repo = createMock<StudentsRepository>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(StudentsRepositoryPort)
+      .overrideProvider(StudentsRepository)
       .useValue(repo)
       .overrideProvider(DataSource)
       .useValue(fakeDataSource())

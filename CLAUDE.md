@@ -31,34 +31,42 @@ test/            # e2e specs, setup-env.ts, tsconfig.jest.json, utils/ (create-m
 ### Module layout
 
 A module with several resources (academics, students, sms) keeps one set of folders and names files
-per resource (`service/sessions.service.ts`, `port/sessions.repository.port.ts`, ...).
+per resource (`services/sessions.service.ts`, `application/ports/sessions.repository.port.ts`, ...).
 
 ```text
 src/module/<name>/
-├── <name>.module.ts      # wiring only: binds each port to its adapter, exports facades only
-├── controller/           # HTTP only; calls facades
-├── dto/                  # every DTO of the module: request, query, response, import rows
-├── domain/               # interfaces, enums, constants and pure functions; no Nest, no TypeORM
-├── port/                 # abstract classes: what services need from the outside
-├── service/              # application layer: *.service.ts (rules) and *.facade.ts (public API)
-├── repository/           # TypeORM adapters implementing the repository ports
-│   └── entities/         # @Entity classes
-├── adapter/              # non-database adapters (SMS gateways, password hasher, JWT, Excel, clock)
-├── listener/             # inbound event adapters (@OnEvent)
-├── middleware/           # inbound HTTP adapters (auth only)
-└── events/               # DomainEvent subclasses this module publishes
+├── <name>.module.ts                  # imports its persistence module; provides services, facades, adapters; exports facades only
+├── application/ports/                # abstract classes: XRepository (x.repository.port.ts) and other ports (ClockPort, SmsGatewayPort…)
+├── controllers/                      # HTTP only; call facades
+├── domain/                           # interfaces, enums, constants and pure functions; no Nest, no TypeORM
+├── dto/                              # every DTO of the module: request, query, response, import rows
+├── services/                         # *.service.ts (rules) and *.facade.ts (public API)
+├── infrastructure/
+│   ├── persistence/relational/
+│   │   ├── entities/                 # @Entity classes (no domain types)
+│   │   ├── mappers/                  # XMapper.toDomain(entity) / XMapper.toPersistence(newX)
+│   │   ├── repositories/             # XRelationalRepository implements XRepository; ALL repository files live here
+│   │   └── relational-persistence.module.ts  # forFeature(entities) + { provide: XRepository, useClass: XRelationalRepository }, exports the ports
+│   └── adapters/                     # non-database adapters (SMS gateways, password hasher, JWT, Excel, clock)
+├── listeners/                        # inbound event adapters (@OnEvent)
+├── middleware/                       # inbound HTTP adapters (auth only)
+└── events/                           # DomainEvent subclasses this module publishes
 ```
 
 Rules that keep it clean:
 
 - Path aliases (tsconfig `paths`): `@common/*`, `@config/*`, `@module/*`, `@test/*`. Mirror any new alias in
   both Jest configs. Nest CLI rewrites them to relative requires in `dist/`.
-- Layer contract: controller (HTTP only) → facade (`service/*.facade.ts`, the module's public API) →
-  service (`service/*.service.ts`: rules, events, HTTP exceptions) → port (`port/*.port.ts`) ← adapter
-  (`repository/*.repository.ts` or `adapter/*`). Controllers call facades, never services or repositories.
-- Ports are `abstract class`es with only `abstract` members. Nest uses the class itself as the DI token, so
-  services inject `private readonly repo: XRepositoryPort` with no `@Inject()`; modules bind
-  `{ provide: XRepositoryPort, useClass: XRepository }`; adapters `implements` (never `extends`) the port.
+- Layer contract: controller (HTTP only) → facade (`services/*.facade.ts`, the module's public API) →
+  service (`services/*.service.ts`: rules, events, HTTP exceptions) → port (`application/ports/*.port.ts`) ←
+  adapter (`infrastructure/persistence/relational/repositories/*` or `infrastructure/adapters/*`). Controllers
+  call facades, never services or repositories.
+- Ports are `abstract class`es with only `abstract` members. Repository ports are named `XRepository`
+  (file `x.repository.port.ts`); their TypeORM adapters `XRelationalRepository`. Nest uses the class itself as
+  the DI token, so services inject `private readonly repo: XRepository` with no `@Inject()`. Repository
+  bindings live in the module's `relational-persistence.module.ts`
+  (`{ provide: XRepository, useClass: XRelationalRepository }`, exporting the ports); other adapters are bound
+  in `<name>.module.ts`. Adapters `implements` (never `extends`) the port.
 - Inside a module, a service may use sibling services and sibling ports. Across modules, only facades:
   a module `exports` its facades and nothing else (the shared kernel exports its ports). Never import
   another module's service, port or repository.
@@ -68,8 +76,9 @@ Rules that keep it clean:
   cycle or an N+1, and the file says so: `auth.repository` (users, institutions before login),
   `teachers.repository` (user roles), `sms/audience.repository` (one recipient query). Do not add more
   without the same justification.
-- Entities `implements` the domain interface, so a repository returns them typed as the domain type and
-  no mapper is needed. Response DTOs map domain objects explicitly so internal columns never leak.
+- Entities never leave `infrastructure/`: repositories convert every row with its mapper
+  (`XMapper.toDomain(entity)` on the way out, `XMapper.toPersistence(newX)` on insert). Entities do not
+  implement domain types. Response DTOs map domain objects explicitly so internal columns never leak.
 - Every response goes through `ResponseEnvelopeInterceptor` (`{ success, data, error, meta? }`). Return a
   `Paginated<T>` from services (`paginate(items, total, query)` from `@common/types/paginated`) to get
   `meta` lifted automatically.
@@ -108,8 +117,8 @@ Rules that keep it clean:
   (so `save()` returns it), and declare checks and partial indexes on the entity too (`@Check`,
   `@Index({ where })`). Composite foreign keys live only in migrations. After changing entities, run
   `yarn typeorm schema:log` against a migrated database: it must list only foreign-key drops.
-- Entities: every module owns its `repository/entities/*.entity.ts` files and registers them with
-  `TypeOrmModule.forFeature([...])` in its module.
+- Entities: every module owns its `infrastructure/persistence/relational/entities/*.entity.ts` files and
+  registers them with `TypeOrmModule.forFeature([...])` in its `relational-persistence.module.ts`.
 - DTOs: class-validator on every request DTO. Types used in decorated signatures must be imported with
   `import type` (isolatedModules + emitDecoratorMetadata).
 - Tenancy: every tenant table carries `institution_id` and is protected by FORCE row-level security keyed on
@@ -121,7 +130,7 @@ Rules that keep it clean:
   because Postgres checks foreign keys as the table owner and bypasses RLS. The app connects as a
   non-superuser owner role so FORCE RLS applies (`src/database/bootstrap.sql`). Never connect as a superuser.
 - Events: extend `DomainEvent` (`@module/events/domain/domain-event`) in `<module>/events/` and publish
-  through `EventPublisherPort`. `@OnEvent` listeners live in `listener/`, run inside the publishing request
+  through `EventPublisherPort`. `@OnEvent` listeners live in `listeners/`, run inside the publishing request
   and must catch their own errors: a failed side effect must not fail the request.
 - Audit: anything backdated, overriding or financial goes through `AuditLogPort.record()`. The `audit_log`
   table is append-only (a trigger rejects UPDATE/DELETE).
@@ -135,7 +144,7 @@ Rules that keep it clean:
 - File uploads use `FileInterceptor` from `@nestjs/platform-express` with a size limit; `Express.Multer.File`
   needs `multer` in tsconfig `types` (the list is explicit, so new ambient type packages must be added there).
 - Excel goes through `exceljs` (CJS) behind `SpreadsheetPort`; the only workbook code is
-  `students/adapter/exceljs.spreadsheet.ts`. Services see typed rows, never cells.
+  `students/infrastructure/adapters/exceljs.spreadsheet.ts`. Services see typed rows, never cells.
 - Outbound HTTP goes through `HttpService` from a module-local `HttpModule.registerAsync` (timeout
   from `httpConfig`); wrap calls in `firstValueFrom`, map failures to `ServiceUnavailableException`, and
   never log request bodies that may contain codes or personal data.
@@ -207,7 +216,7 @@ Testing conventions:
   depends on the date.
 - Provide real values only where a constructor reads config at construction time
   (`{ provide: smsConfig.KEY, useValue: {...} }`); everything else is auto-mocked.
-- E2E specs: `.overrideProvider(XRepositoryPort).useValue(createMock<XRepositoryPort>())` and
+- E2E specs: `.overrideProvider(XRepository).useValue(createMock<XRepository>())` and
   `.overrideProvider(DataSource).useValue(fakeDataSource())`.
 - Fixtures are full typed domain objects (`const row: LeaveApplication = {...}`), never partial objects cast
   with `as never`. Database errors come from `pgError(UNIQUE_VIOLATION)` in

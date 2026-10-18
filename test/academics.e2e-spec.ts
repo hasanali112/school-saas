@@ -7,9 +7,9 @@ import { ApiResponse } from '@common/types/api-response';
 import { Role } from '@module/auth/domain/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
-import { ClassesRepositoryPort } from '@module/academics/port/classes.repository.port';
-import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
-import { ShiftsRepositoryPort } from '@module/academics/port/shifts.repository.port';
+import { ClassesRepository } from '@module/academics/application/ports/classes.repository.port';
+import { SessionsRepository } from '@module/academics/application/ports/sessions.repository.port';
+import { ShiftsRepository } from '@module/academics/application/ports/shifts.repository.port';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -24,17 +24,17 @@ describe('Academics (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const sessions = createMock<SessionsRepositoryPort>();
-  const shifts = createMock<ShiftsRepositoryPort>();
-  const classes = createMock<ClassesRepositoryPort>();
+  const sessions = createMock<SessionsRepository>();
+  const shifts = createMock<ShiftsRepository>();
+  const classes = createMock<ClassesRepository>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(SessionsRepositoryPort)
+      .overrideProvider(SessionsRepository)
       .useValue(sessions)
-      .overrideProvider(ShiftsRepositoryPort)
+      .overrideProvider(ShiftsRepository)
       .useValue(shifts)
-      .overrideProvider(ClassesRepositoryPort)
+      .overrideProvider(ClassesRepository)
       .useValue(classes)
       .overrideProvider(DataSource)
       .useValue(fakeDataSource())
