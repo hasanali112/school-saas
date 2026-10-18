@@ -6,62 +6,92 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 NestJS 11 API for Ontek EduSmart, a multi-tenant school-management SaaS. Feature specs live in
 [docs/features/](docs/features/README.md); each spec maps to one folder under `src/module/`.
-The database layer is **TypeORM on PostgreSQL** (`@nestjs/typeorm`, `typeorm`, `pg`).
+The database layer is **TypeORM on PostgreSQL** (`@nestjs/typeorm`, `typeorm`, `pg`) and only TypeORM:
+the Drizzle prototype is gone, and no `drizzle-orm` code may come back.
 
-The project is mid-migration from an earlier Drizzle prototype. What is already on the new footing:
-`src/config/` (namespaced, validated), `src/common/utils/validate/` (`validateConfig`),
-`src/common/services/database/typeorm.config.service.ts`, and the `TypeOrmModule.forRootAsync` wiring in
-`app.module.ts`. What is not yet:
-
-- The feature folders under `src/module/` (`auth`, `users`, `institutions`, `academics` split into `sessions`,
-  `shifts`, `classes`, `subjects`, `teachers`, `holidays`, `students`, `attendance`, `leave`, `consent`, `sms`,
-  `health`) still contain Drizzle `*.schema.ts` and `*.repository.ts` files. They are to be converted to TypeORM
-  entities and repositories one module at a time. Do not add new `drizzle-orm` code.
-- `app.module.ts` still imports `@modules/*`, `@database/*` and `@shared/*`; the real alias is `@module/*` and
-  the `src/database/` and `src/shared/` folders do not exist yet. `yarn typecheck` fails on those until the
-  modules are moved over, so filter its output to the files you touched.
-- Tenancy (below) is the intended design and must be re-implemented on TypeORM.
+Every module follows the hexagonal (ports & adapters) layout described below. The plan and the
+reasons behind it are in [refactor.md](refactor.md).
 
 ## Code layout
 
 ```text
 src/
-├── main.ts / app.module.ts
+├── main.ts / app.module.ts / app.setup.ts   # setupApp(): /api prefix + response envelope
 ├── common/      # cross-cutting, no domain knowledge: filters, interceptors, types, dto, services, utils
-│   ├── services/database/   # TypeOrmConfigService
-│   └── utils/validate/      # validateConfig (generic env validation)
+│   └── services/database/   # DatabaseService (tenant/system transactions), tenant context, naming strategy
 ├── config/      # one folder per concern: app, auth, database, http, sms
-└── module/      # one folder per feature spec; a module with sub-resources uses sub-folders
-test/            # e2e specs, setup-env.ts, utils/ (create-mock, matchers)
+├── database/    # data-source.ts (TypeORM CLI), migrations/, bootstrap.sql, seed.ts
+└── module/
+    ├── audit/ events/ time/        # shared kernel: AuditLogPort, EventPublisherPort, ClockPort (@Global)
+    ├── academics/                  # sessions, shifts, classes+sections, subjects, teachers, holidays
+    ├── auth/ users/ institutions/ students/ leave/ attendance/ consent/ sms/ health/
+test/            # e2e specs, setup-env.ts, tsconfig.jest.json, utils/ (create-mock, matchers, pg-error, fake-data-source)
 ```
 
-Each config folder holds `<name>.config.ts` (env class + `registerAs` factory) and `<name>.type.ts`
-(the returned shape as an interface; `app.type.ts` also owns `NodeEnv`).
+### Module layout
+
+A module with several resources (academics, students, sms) keeps one set of folders and names files
+per resource (`service/sessions.service.ts`, `port/sessions.repository.port.ts`, ...).
+
+```text
+src/module/<name>/
+├── <name>.module.ts      # wiring only: binds each port to its adapter, exports facades only
+├── controller/           # HTTP only; calls facades
+├── dto/                  # every DTO of the module: request, query, response, import rows
+├── domain/               # interfaces, enums, constants and pure functions; no Nest, no TypeORM
+├── port/                 # abstract classes: what services need from the outside
+├── service/              # application layer: *.service.ts (rules) and *.facade.ts (public API)
+├── repository/           # TypeORM adapters implementing the repository ports
+│   └── entities/         # @Entity classes
+├── adapter/              # non-database adapters (SMS gateways, password hasher, JWT, Excel, clock)
+├── listener/             # inbound event adapters (@OnEvent)
+├── middleware/           # inbound HTTP adapters (auth only)
+└── events/               # DomainEvent subclasses this module publishes
+```
 
 Rules that keep it clean:
 
 - Path aliases (tsconfig `paths`): `@common/*`, `@config/*`, `@module/*`, `@test/*`. Mirror any new alias in
   both Jest configs. Nest CLI rewrites them to relative requires in `dist/`.
-- Layer contract per module: controller (HTTP only) → service (rules, events, HTTP exceptions) →
-  repository (the only place that talks to TypeORM) → entity. Controllers never call repositories.
+- Layer contract: controller (HTTP only) → facade (`service/*.facade.ts`, the module's public API) →
+  service (`service/*.service.ts`: rules, events, HTTP exceptions) → port (`port/*.port.ts`) ← adapter
+  (`repository/*.repository.ts` or `adapter/*`). Controllers call facades, never services or repositories.
+- Ports are `abstract class`es with only `abstract` members. Nest uses the class itself as the DI token, so
+  services inject `private readonly repo: XRepositoryPort` with no `@Inject()`; modules bind
+  `{ provide: XRepositoryPort, useClass: XRepository }`; adapters `implements` (never `extends`) the port.
+- Inside a module, a service may use sibling services and sibling ports. Across modules, only facades:
+  a module `exports` its facades and nothing else (the shared kernel exports its ports). Never import
+  another module's service, port or repository.
+- Repository adapters are the only code that touches TypeORM. They go through `DatabaseService`
+  (`db.tenant(m => ...)` or `db.system(m => ...)`), not `@InjectRepository`. They write only their own
+  module's tables. Reading another module's table is allowed only where a facade call would create a module
+  cycle or an N+1, and the file says so: `auth.repository` (users, institutions before login),
+  `teachers.repository` (user roles), `sms/audience.repository` (one recipient query). Do not add more
+  without the same justification.
+- Entities `implements` the domain interface, so a repository returns them typed as the domain type and
+  no mapper is needed. Response DTOs map domain objects explicitly so internal columns never leak.
 - Every response goes through `ResponseEnvelopeInterceptor` (`{ success, data, error, meta? }`). Return a
-  `Paginated<T>` from services (`@common/types/paginated`) to get `meta` lifted automatically.
-- Every error goes through `AllExceptionsFilter`; codes come from the `HttpStatus` enum name
-  (`NOT_FOUND`, `CONFLICT`) or `VALIDATION_ERROR`.
-- Guards are global (`ThrottlerGuard`, `AuthGuard`, `RolesGuard`, in that order). Use `@Public()` for open
-  routes and `@Roles([...])` for role gates, both from the auth module's `decorators`. Resource-level checks
-  (own section, own child) go in services. Roles are the `Role` enum in the auth module; validate request
-  DTOs with `@IsEnum(Role, { each: true })`.
+  `Paginated<T>` from services (`paginate(items, total, query)` from `@common/types/paginated`) to get
+  `meta` lifted automatically.
+- Every error goes through `AllExceptionsFilter`, which also uses the envelope; codes come from the
+  `HttpStatus` enum name (`NOT_FOUND`, `CONFLICT`) or `VALIDATION_ERROR` (with `details`).
+- Guards are global (`ThrottlerGuard`, `AuthGuard`, `RolesGuard`, in that order). `JwtAuthMiddleware`
+  (auth module, every route) verifies the bearer token through `AuthFacade`, sets `req.user` and opens the
+  tenant context; a bad token leaves the request anonymous, so `AuthGuard` answers 401. Use `@Public()` for
+  open routes and `@Roles([...])` for role gates, both from `@module/auth/decorators`. Resource-level checks
+  (own section, own child) go in services. Roles are the `Role` enum in `@module/auth/domain/role`;
+  validate request DTOs with `@IsEnum(Role, { each: true })`.
 - Review conventions (apply everywhere): closed sets of named values (roles, statuses, kinds, purposes)
-  are TypeScript `enum`s owned by their module; `as const` objects are only for data tables (templates,
-  merge-field labels). `any` is banned (`strict: true`, eslint `no-explicit-any: error`); `unknown` only at
-  true boundaries (caught errors, raw payloads) and narrowed immediately. Every object shape that is not
-  a request/response DTO gets a named `interface` (no inline `{ a: x }` types in signatures, no
-  `Record<string, ...>` where the keys are known); interfaces are plain (no `readonly`); a type is an
-  `interface`/`type`, never a class. Helper functions used by one class are `private` methods of that
-  class. Nothing domain-specific lives in `common/` (owning module, or a shared domain folder when several
-  modules need it). Follow the framework's documented way before inventing a wrapper. Tests use typed
-  fixtures and the helpers in `test/utils`, never `as never`, `as object` or `as unknown as`.
+  are TypeScript `enum`s owned by their module's `domain/`; `as const` objects are only for data tables
+  (templates, merge-field labels, import columns). `any` is banned (`strict: true`, eslint
+  `no-explicit-any: error`); `unknown` only at true boundaries (caught errors, raw payloads) and narrowed
+  immediately. Every object shape that is not a request/response DTO gets a named `interface` (no inline
+  `{ a: x }` types in signatures, no `Record<string, ...>` where the keys are known); interfaces are plain
+  (no `readonly`); a type is an `interface`/`type`, never a class, except ports, which are abstract classes
+  so they can be DI tokens. Helper functions used by one class are `private` methods of that class.
+  Nothing domain-specific lives in `common/` (owning module, or the shared kernel when several modules need
+  it). Follow the framework's documented way before inventing a wrapper. Tests use typed fixtures and the
+  helpers in `test/utils`, never `as never`, `as object` or `as unknown as`.
 - Config: each `src/config/<name>/<name>.config.ts` is a `registerAs` factory that validates its own env
   class through the generic `validateConfig` (`@common/utils/validate/validate-config`, throws
   `InternalServerErrorException` listing every invalid variable, never the values) and is injected as
@@ -71,41 +101,49 @@ Rules that keep it clean:
   returned shape added to that folder's `*.type.ts`. All five namespaces are loaded in `app.module.ts`
   (`ConfigModule.forRoot`, global, cached, `.env.local` then `.env`).
 - Database: `TypeOrmConfigService` builds the options from `databaseConfig` (`DATABASE_URL`) with
-  `autoLoadEntities: true` and `synchronize: false`. Do not pass a `dataSourceFactory` unless the data source
-  must be wrapped; `forRootAsync` already creates and initializes it. Schema changes go through TypeORM
-  migrations, never `synchronize`.
-- Entities: every module owns its `<name>.entity.ts` files and registers them with
-  `TypeOrmModule.forFeature([...])`. Response DTOs map entities explicitly so internal columns never leak.
+  `autoLoadEntities: true`, `synchronize: false` and `SnakeNamingStrategy` (so `nameBn` maps to `name_bn`
+  with no `name:` on columns). Keep `src/database/data-source.ts` (TypeORM CLI) in step with it. Schema
+  changes go through migrations in `src/database/migrations/`, never `synchronize`. Give every column an
+  explicit `type` (union types defeat `emitDecoratorMetadata`), give `default` to columns with a DB default
+  (so `save()` returns it), and declare checks and partial indexes on the entity too (`@Check`,
+  `@Index({ where })`). Composite foreign keys live only in migrations. After changing entities, run
+  `yarn typeorm schema:log` against a migrated database: it must list only foreign-key drops.
+- Entities: every module owns its `repository/entities/*.entity.ts` files and registers them with
+  `TypeOrmModule.forFeature([...])` in its module.
 - DTOs: class-validator on every request DTO. Types used in decorated signatures must be imported with
   `import type` (isolatedModules + emitDecoratorMetadata).
-- Tenancy (intended design, to be re-implemented on TypeORM): every tenant table carries `institution_id`
-  and is protected by Postgres row-level security keyed on a per-transaction `app.institution_id` setting,
-  opened once the bearer token is verified (there is no auth middleware; only `LoggerMiddleware` runs on every request). Tenant-scoped references use composite
-  foreign keys `(institution_id, <fk>)` → `(institution_id, id)` because Postgres checks foreign keys as the
-  table owner and bypasses RLS. The app must connect as a non-superuser owner role so FORCE RLS applies;
-  pre-auth lookups and platform work use a separate NOLOGIN `BYPASSRLS` role. Never connect as a superuser.
-- Events: extend a `DomainEvent` base in `<module>/events/` and publish via `@nestjs/event-emitter`.
-  `@OnEvent` listeners run inside the publishing request, so they must catch their own errors: a failed side
-  effect must not fail the request.
-- Audit: anything backdated, overriding or financial goes through an audit service. The audit table is
-  append-only (a trigger rejects UPDATE/DELETE).
-- Dates: attendance and leave compare ISO date strings; "today" is `todayLocal()` (Asia/Dhaka), never
-  `new Date()` on the server clock.
+- Tenancy: every tenant table carries `institution_id` and is protected by FORCE row-level security keyed on
+  `app_current_institution()`, which reads the per-transaction `app.institution_id` setting.
+  `DatabaseService.tenant()` opens a transaction and sets it from the tenant context (it throws outside an
+  authenticated request). `DatabaseService.system()` switches to the NOLOGIN `BYPASSRLS` role
+  (`DATABASE_SYSTEM_ROLE`, default `edusmart_system`) for pre-auth lookups and provider callbacks only.
+  Tenant-scoped references use composite foreign keys `(institution_id, <fk>)` → `(institution_id, id)`
+  because Postgres checks foreign keys as the table owner and bypasses RLS. The app connects as a
+  non-superuser owner role so FORCE RLS applies (`src/database/bootstrap.sql`). Never connect as a superuser.
+- Events: extend `DomainEvent` (`@module/events/domain/domain-event`) in `<module>/events/` and publish
+  through `EventPublisherPort`. `@OnEvent` listeners live in `listener/`, run inside the publishing request
+  and must catch their own errors: a failed side effect must not fail the request.
+- Audit: anything backdated, overriding or financial goes through `AuditLogPort.record()`. The `audit_log`
+  table is append-only (a trigger rejects UPDATE/DELETE).
+- Dates: attendance and leave compare ISO date strings; "today" is `ClockPort.today()` (Asia/Dhaka, built on
+  `todayLocal()` in `@module/time/domain/local-date`), never `new Date()` on the server clock.
 - Keep `@nestjs/config`, `@nestjs/jwt`, `@nestjs/event-emitter`, `@nestjs/axios` on the majors that
   match Nest 11 (4.x, 11.x, 3.x, 4.x). Their 12.x releases are ESM-only and break Jest under CommonJS.
-  `@nestjs/typeorm` is on 12.x and `typeorm` on 1.x; check their release notes before bumping.
+  `@nestjs/typeorm` is on 12.x (the first release that supports `typeorm` 1.x) and is ESM-only too: both Jest
+  configs compile it with ts-jest (`test/tsconfig.jest.json`, `transformIgnorePatterns`) and swap its one
+  `import.meta` file for `test/utils/typeorm-compat.stub.ts`. The app itself needs Node 22.12+ (require of ESM).
 - File uploads use `FileInterceptor` from `@nestjs/platform-express` with a size limit; `Express.Multer.File`
   needs `multer` in tsconfig `types` (the list is explicit, so new ambient type packages must be added there).
-- Excel goes through `exceljs` (CJS). Spreadsheet reading/writing lives in one file per module
-  (`import/spreadsheet.ts`); services see typed rows, never cells.
+- Excel goes through `exceljs` (CJS) behind `SpreadsheetPort`; the only workbook code is
+  `students/adapter/exceljs.spreadsheet.ts`. Services see typed rows, never cells.
 - Outbound HTTP goes through `HttpService` from a module-local `HttpModule.registerAsync` (timeout
   from `httpConfig`); wrap calls in `firstValueFrom`, map failures to `ServiceUnavailableException`, and
   never log request bodies that may contain codes or personal data.
-- SMS: guardian-facing messages go through `BatchesService` (consent, cost preview, ledger, log), never
-  `SmsService.send()`, which is for transactional traffic only (OTP). Money is in paisa integers; the
-  `sms_ledger` table is append-only like the audit table. Modules that want to notify guardians call
-  `BatchesService.draftForSystem()` with a `dedupeKey` and let the office send; they never send
-  directly (Spec v2 §9: cost before send). Fan-out uses `mapWithConcurrency`.
+- SMS: guardian-facing messages go through `BatchesService` (consent, cost preview, ledger, log); other
+  modules use `SmsFacade.draftForSystem()` with a `dedupeKey` and let the office send; they never send
+  directly (Spec v2 §9: cost before send). `SmsFacade.sendTransactional()` is for OTPs only. Gateways
+  implement `SmsGatewayPort`. Money is in paisa integers; the `sms_ledger` table is append-only like the
+  audit table. Fan-out uses `mapWithConcurrency` (`@common/utils/concurrency`).
 
 ## Commands
 
@@ -114,7 +152,7 @@ Package manager is **yarn** (`yarn.lock` is the only lockfile; there is no `pack
 
 ```bash
 yarn install
-yarn start:dev        # watch mode, http://localhost:<PORT>/api
+yarn start:dev        # watch mode, http://localhost:<PORT>/api, Swagger at /docs
 yarn build            # nest build -> dist/ (deleteOutDir: true, so dist/ is wiped first)
 yarn start:prod       # node dist/main
 yarn lint             # eslint with --fix baked in — it rewrites files
@@ -122,7 +160,13 @@ yarn format           # prettier --write over src/ and test/
 yarn test             # unit tests
 yarn test:cov         # coverage -> ./coverage
 yarn test:e2e         # uses test/jest-e2e.json
-yarn typecheck        # tsc --noEmit
+yarn typecheck        # tsc --noEmit (covers specs too)
+
+yarn migration:run                                    # apply migrations (DATABASE_URL)
+yarn migration:revert                                 # undo the last one
+yarn migration:create src/database/migrations/Name    # empty migration to fill in
+yarn typeorm schema:log                               # entity ↔ database drift check
+SEED_PASSWORD=... yarn db:seed                        # demo institution "demo", head 01700000000
 ```
 
 Run a single unit test:
@@ -133,13 +177,11 @@ yarn test --testPathPatterns=app.controller  # Jest 30 renamed --testPathPattern
 yarn test -t "should return"                 # by test name
 ```
 
-There are no `db:generate` / `db:migrate` scripts any more (they belonged to drizzle-kit); add TypeORM
-migration scripts when the first migration is written. `db:seed` still points at the old
-`dist/database/seed` and is stale. There is no DB bootstrap script yet: create the database and role by hand
-and point `DATABASE_URL` at it.
-Environment is loaded from `.env.local` then `.env` and validated at boot by the `registerAs` factories in
-[src/config/](src/config/); a missing or invalid variable aborts startup with one message listing all of
-them. The API is served under the `/api` prefix.
+Fresh database: run `src/database/bootstrap.sql` once as a superuser
+(`psql -v app_password=... -f src/database/bootstrap.sql`), point `DATABASE_URL` at the `edusmart_app` role,
+then `yarn migration:run` and optionally `yarn db:seed`. Environment is loaded from `.env.local` then `.env`
+and validated at boot by the `registerAs` factories in [src/config/](src/config/); a missing or invalid
+variable aborts startup with one message listing all of them. The API is served under the `/api` prefix.
 
 ## Test layout
 
@@ -150,21 +192,28 @@ Two separate Jest configs, and they do not see each other's files:
 - **E2E** — [test/jest-e2e.json](test/jest-e2e.json). `rootDir` is `test/` (aliases map to
   `<rootDir>/../src`), pattern is `*.e2e-spec.ts`, and `test/setup-env.ts` sets env vars before
   any module import (config validation runs at import time). These boot the real Nest app via
-  `Test.createTestingModule` + supertest and override repositories and the database so no Postgres is needed.
+  `Test.createTestingModule` + supertest, override repository ports with mocks and the TypeORM
+  `DataSource` with `fakeDataSource()`, so no Postgres is needed.
 
 Testing conventions:
 
 - Every service/controller spec builds its subject with `Test.createTestingModule({ providers: [X] })
   .useMocker(createMock)` from [test/utils/create-mock.ts](test/utils/create-mock.ts) and reads mocks
-  back with `getMock(moduleRef, Dep)` (typed `jest.Mocked<Dep>`). This exercises Nest's injector, so a
-  missing `@Injectable()` or wrong `@Inject()` token fails the spec. Direct `new Service()` is only for
-  code with no DI at all (pure DTO/helper specs).
+  back with `getMock(moduleRef, Dep)` (typed `jest.Mocked<Dep>`; ports work as tokens). This exercises
+  Nest's injector, so a missing `@Injectable()` or wrong port fails the spec. Direct `new Service()` is only
+  for code with no DI at all (pure DTO/helper specs).
+- Mock ports and other modules' facades, never adapters. Provide a real adapter only when the spec is about
+  it (the import spec uses the real `ExcelJsSpreadsheet`). Mock `ClockPort` (`today`/`now`) wherever a rule
+  depends on the date.
 - Provide real values only where a constructor reads config at construction time
   (`{ provide: smsConfig.KEY, useValue: {...} }`); everything else is auto-mocked.
-- E2E specs override repositories with `createMock<XRepository>()` and the database with `{}`.
-- Fixtures are full typed objects (`const row: LeaveApplication = {...}`), never partial objects cast
-  with `as never`. Asymmetric matchers go through `anyOf(Date)` / `containing<AuditEntry>({...})` from
-  [test/utils/matchers.ts](test/utils/matchers.ts), the one place Jest's `any`-typed matchers are adapted.
+- E2E specs: `.overrideProvider(XRepositoryPort).useValue(createMock<XRepositoryPort>())` and
+  `.overrideProvider(DataSource).useValue(fakeDataSource())`.
+- Fixtures are full typed domain objects (`const row: LeaveApplication = {...}`), never partial objects cast
+  with `as never`. Database errors come from `pgError(UNIQUE_VIOLATION)` in
+  [test/utils/pg-error.ts](test/utils/pg-error.ts). Asymmetric matchers go through `anyOf(Date)` /
+  `containing<AuditEntry>({...})` from [test/utils/matchers.ts](test/utils/matchers.ts), the one place Jest's
+  `any`-typed matchers are adapted.
 
 ## Lint and type-checking notes
 

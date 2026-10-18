@@ -11,7 +11,9 @@ function formatErrors(
   parentPath: string = '',
 ): string[] {
   return errors.flatMap((error) => {
-    const path = parentPath ? `${parentPath}.${error.property}` : error.property;
+    const path = parentPath
+      ? `${parentPath}.${error.property}`
+      : error.property;
     const own = Object.values(error.constraints ?? {}).map(
       (message) => `${INDENT}- ${path}: ${message}`,
     );

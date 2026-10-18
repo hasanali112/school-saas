@@ -4,11 +4,12 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@modules/auth/roles';
-import { DatabaseService } from '@database/database.service';
-import { ClassesRepository } from '@modules/academics/classes/classes.repository';
-import { SessionsRepository } from '@modules/academics/sessions/sessions.repository';
-import { ShiftsRepository } from '@modules/academics/shifts/shifts.repository';
+import { Role } from '@module/auth/domain/role';
+import { DataSource } from 'typeorm';
+import { fakeDataSource } from '@test/utils/fake-data-source';
+import { ClassesRepositoryPort } from '@module/academics/port/classes.repository.port';
+import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
+import { ShiftsRepositoryPort } from '@module/academics/port/shifts.repository.port';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -23,20 +24,20 @@ describe('Academics (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const sessions = createMock<SessionsRepository>();
-  const shifts = createMock<ShiftsRepository>();
-  const classes = createMock<ClassesRepository>();
+  const sessions = createMock<SessionsRepositoryPort>();
+  const shifts = createMock<ShiftsRepositoryPort>();
+  const classes = createMock<ClassesRepositoryPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(SessionsRepository)
+      .overrideProvider(SessionsRepositoryPort)
       .useValue(sessions)
-      .overrideProvider(ShiftsRepository)
+      .overrideProvider(ShiftsRepositoryPort)
       .useValue(shifts)
-      .overrideProvider(ClassesRepository)
+      .overrideProvider(ClassesRepositoryPort)
       .useValue(classes)
-      .overrideProvider(DatabaseService)
-      .useValue({})
+      .overrideProvider(DataSource)
+      .useValue(fakeDataSource())
       .compile();
     app = setupApp(moduleRef.createNestApplication());
     await app.init();
@@ -58,8 +59,8 @@ describe('Academics (e2e)', () => {
 
   it('teachers can read classes but not create them', async () => {
     classes.findAllWithSections.mockResolvedValue({
-      classRows: [],
-      sectionRows: [],
+      classes: [],
+      sections: [],
     });
     await api()
       .get('/api/academics/classes')
@@ -89,7 +90,7 @@ describe('Academics (e2e)', () => {
 
   it('GET /api/academics/classes nests sections under classes', async () => {
     classes.findAllWithSections.mockResolvedValue({
-      classRows: [
+      classes: [
         {
           id: CLASS_ID,
           institutionId: INSTITUTION_ID,
@@ -98,7 +99,7 @@ describe('Academics (e2e)', () => {
           createdAt: new Date(),
         },
       ],
-      sectionRows: [
+      sections: [
         {
           id: 's1',
           institutionId: INSTITUTION_ID,

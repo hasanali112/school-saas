@@ -1,4 +1,5 @@
-import { SmsLedgerRow } from '@database/schema';
+import { SmsLedgerKind } from '../domain/sms';
+import type { SmsLedgerEntry } from '../domain/sms-balance';
 
 export interface BalanceResponseDto {
   balancePaisa: number;
@@ -7,7 +8,7 @@ export interface BalanceResponseDto {
 
 export class LedgerEntryResponseDto {
   readonly id: string;
-  readonly kind: SmsLedgerRow['kind'];
+  readonly kind: SmsLedgerKind;
   readonly amountPaisa: number;
   readonly balanceAfterPaisa: number;
   readonly batchId: string | null;
@@ -15,7 +16,7 @@ export class LedgerEntryResponseDto {
   readonly actorId: string | null;
   readonly createdAt: Date;
 
-  private constructor(row: SmsLedgerRow) {
+  private constructor(row: SmsLedgerEntry) {
     this.id = row.id;
     this.kind = row.kind;
     this.amountPaisa = row.amountPaisa;
@@ -26,7 +27,7 @@ export class LedgerEntryResponseDto {
     this.createdAt = row.createdAt;
   }
 
-  static fromMany(rows: readonly SmsLedgerRow[]): LedgerEntryResponseDto[] {
+  static fromMany(rows: readonly SmsLedgerEntry[]): LedgerEntryResponseDto[] {
     return rows.map((row) => new LedgerEntryResponseDto(row));
   }
 }

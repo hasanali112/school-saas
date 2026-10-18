@@ -1,6 +1,7 @@
-import { SmsBatchRow, SmsMessageRow } from '@database/schema';
-import { AudienceExclusions } from '../audience/audience.service';
-import { SmsEncoding } from '../segments';
+import type { AudienceExclusions } from '../domain/audience';
+import { SmsEncoding } from '../domain/segments';
+import { SmsBatchStatus, SmsMessageStatus, SmsPurpose } from '../domain/sms';
+import type { SmsBatch, SmsMessage } from '../domain/sms-batch';
 
 export interface PreviewDto {
   recipientCount: number;
@@ -16,8 +17,8 @@ export interface PreviewDto {
 
 export class BatchResponseDto {
   readonly id: string;
-  readonly purpose: SmsBatchRow['purpose'];
-  readonly status: SmsBatchRow['status'];
+  readonly purpose: SmsPurpose;
+  readonly status: SmsBatchStatus;
   readonly templateKey: string | null;
   readonly body: string;
   readonly recipientCount: number;
@@ -31,7 +32,7 @@ export class BatchResponseDto {
   readonly createdAt: Date;
   readonly preview?: PreviewDto;
 
-  private constructor(row: SmsBatchRow, preview?: PreviewDto) {
+  private constructor(row: SmsBatch, preview?: PreviewDto) {
     this.id = row.id;
     this.purpose = row.purpose;
     this.status = row.status;
@@ -49,11 +50,11 @@ export class BatchResponseDto {
     if (preview) this.preview = preview;
   }
 
-  static from(row: SmsBatchRow, preview?: PreviewDto): BatchResponseDto {
+  static from(row: SmsBatch, preview?: PreviewDto): BatchResponseDto {
     return new BatchResponseDto(row, preview);
   }
 
-  static fromMany(rows: readonly SmsBatchRow[]): BatchResponseDto[] {
+  static fromMany(rows: readonly SmsBatch[]): BatchResponseDto[] {
     return rows.map((row) => BatchResponseDto.from(row));
   }
 }
@@ -66,14 +67,14 @@ export class MessageResponseDto {
   readonly body: string;
   readonly segments: number;
   readonly costPaisa: number;
-  readonly status: SmsMessageRow['status'];
+  readonly status: SmsMessageStatus;
   readonly gateway: string | null;
   readonly providerMessageId: string | null;
   readonly error: string | null;
   readonly sentAt: Date | null;
   readonly deliveredAt: Date | null;
 
-  private constructor(row: SmsMessageRow) {
+  private constructor(row: SmsMessage) {
     this.id = row.id;
     this.phone = row.phone;
     this.guardianId = row.guardianId;
@@ -89,7 +90,7 @@ export class MessageResponseDto {
     this.deliveredAt = row.deliveredAt;
   }
 
-  static fromMany(rows: readonly SmsMessageRow[]): MessageResponseDto[] {
+  static fromMany(rows: readonly SmsMessage[]): MessageResponseDto[] {
     return rows.map((row) => new MessageResponseDto(row));
   }
 }

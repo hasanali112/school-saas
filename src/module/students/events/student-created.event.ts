@@ -1,4 +1,4 @@
-import { DomainEvent } from '@shared/events/domain-event';
+import { DomainEvent } from '@module/events/domain/domain-event';
 
 export class StudentCreatedEvent extends DomainEvent {
   static readonly NAME = 'student.created';

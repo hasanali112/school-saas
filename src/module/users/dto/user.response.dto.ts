@@ -1,5 +1,6 @@
-import { Role } from '@modules/auth/roles';
-import { UserRow } from '@database/schema';
+import { Role } from '@module/auth/domain/role';
+import { UserStatus } from '../domain/user';
+import type { User } from '../domain/user';
 
 /** Never includes passwordHash. */
 export class UserResponseDto {
@@ -7,23 +8,23 @@ export class UserResponseDto {
   readonly phone: string;
   readonly name: string;
   readonly roles: Role[];
-  readonly status: UserRow['status'];
+  readonly status: UserStatus;
   readonly createdAt: Date;
 
-  private constructor(row: UserRow) {
-    this.id = row.id;
-    this.phone = row.phone;
-    this.name = row.name;
-    this.roles = row.roles as Role[];
-    this.status = row.status;
-    this.createdAt = row.createdAt;
+  private constructor(user: User) {
+    this.id = user.id;
+    this.phone = user.phone;
+    this.name = user.name;
+    this.roles = user.roles;
+    this.status = user.status;
+    this.createdAt = user.createdAt;
   }
 
-  static from(row: UserRow): UserResponseDto {
-    return new UserResponseDto(row);
+  static from(user: User): UserResponseDto {
+    return new UserResponseDto(user);
   }
 
-  static fromMany(rows: readonly UserRow[]): UserResponseDto[] {
-    return rows.map((row) => UserResponseDto.from(row));
+  static fromMany(users: readonly User[]): UserResponseDto[] {
+    return users.map((user) => UserResponseDto.from(user));
   }
 }

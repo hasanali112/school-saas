@@ -1,5 +1,5 @@
 import { Matches } from 'class-validator';
-import { OTP_LENGTH } from '../auth.constants';
+import { OTP_LENGTH } from '../domain/auth.constants';
 import { RequestOtpDto } from './request-otp.dto';
 
 export class VerifyOtpDto extends RequestOtpDto {

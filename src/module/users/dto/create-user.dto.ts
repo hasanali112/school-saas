@@ -8,7 +8,7 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
-import { Role } from '@modules/auth/roles';
+import { Role } from '@module/auth/domain/role';
 import { BD_PHONE_MESSAGE, BD_PHONE_REGEX } from '@common/utils/phone/phone';
 
 const PASSWORD_MIN = 8;

@@ -1,13 +1,15 @@
-import { GuardianRow, StudentGuardianRow, StudentRow } from '@database/schema';
+import { GuardianRelation } from '../domain/guardian';
+import type { Guardian, StudentGuardian } from '../domain/guardian';
+import type { Student } from '../domain/student';
 
 export class StudentGuardianResponseDto {
   readonly guardianId: string;
   readonly phone: string;
   readonly name: string;
-  readonly relation: StudentGuardianRow['relation'];
+  readonly relation: GuardianRelation;
   readonly isPrimary: boolean;
 
-  private constructor(link: StudentGuardianRow, guardian: GuardianRow) {
+  private constructor(link: StudentGuardian, guardian: Guardian) {
     this.guardianId = guardian.id;
     this.phone = guardian.phone;
     this.name = guardian.name;
@@ -16,8 +18,8 @@ export class StudentGuardianResponseDto {
   }
 
   static from(
-    link: StudentGuardianRow,
-    guardian: GuardianRow,
+    link: StudentGuardian,
+    guardian: Guardian,
   ): StudentGuardianResponseDto {
     return new StudentGuardianResponseDto(link, guardian);
   }
@@ -29,9 +31,9 @@ export class GuardianChildDto {
   readonly admissionNo: string;
   readonly nameBn: string;
   readonly nameEn: string;
-  readonly relation: StudentGuardianRow['relation'];
+  readonly relation: GuardianRelation;
 
-  private constructor(link: StudentGuardianRow, student: StudentRow) {
+  private constructor(link: StudentGuardian, student: Student) {
     this.studentId = student.id;
     this.admissionNo = student.admissionNo;
     this.nameBn = student.nameBn;
@@ -39,7 +41,7 @@ export class GuardianChildDto {
     this.relation = link.relation;
   }
 
-  static from(link: StudentGuardianRow, student: StudentRow): GuardianChildDto {
+  static from(link: StudentGuardian, student: Student): GuardianChildDto {
     return new GuardianChildDto(link, student);
   }
 }

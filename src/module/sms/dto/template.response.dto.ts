@@ -1,5 +1,5 @@
-import { SmsTemplateRow } from '@database/schema';
-import { extractMergeFields } from '../templates/template-render';
+import type { SmsTemplate } from '../domain/sms-template';
+import { extractMergeFields } from '../domain/template-render';
 
 export class TemplateResponseDto {
   readonly mergeFields: string[];
@@ -14,7 +14,7 @@ export class TemplateResponseDto {
     this.mergeFields = extractMergeFields(body);
   }
 
-  static from(row: SmsTemplateRow): TemplateResponseDto {
+  static from(row: SmsTemplate): TemplateResponseDto {
     return new TemplateResponseDto(
       row.key,
       row.name,

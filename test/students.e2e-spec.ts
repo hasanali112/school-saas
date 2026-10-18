@@ -4,9 +4,11 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@modules/auth/roles';
-import { DatabaseService } from '@database/database.service';
-import { StudentsRepository } from '@modules/students/students.repository';
+import { Role } from '@module/auth/domain/role';
+import { DataSource } from 'typeorm';
+import { fakeDataSource } from '@test/utils/fake-data-source';
+import { StudentsRepositoryPort } from '@module/students/port/students.repository.port';
+import { StudentStatus } from '@module/students/domain/student';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -24,14 +26,14 @@ describe('Students (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const repo = createMock<StudentsRepository>();
+  const repo = createMock<StudentsRepositoryPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(StudentsRepository)
+      .overrideProvider(StudentsRepositoryPort)
       .useValue(repo)
-      .overrideProvider(DatabaseService)
-      .useValue({})
+      .overrideProvider(DataSource)
+      .useValue(fakeDataSource())
       .compile();
 
     app = setupApp(moduleRef.createNestApplication());
@@ -109,7 +111,7 @@ describe('Students (e2e)', () => {
       addressBn: null,
       addressEn: null,
       photoKey: null,
-      status: 'active',
+      status: StudentStatus.Active,
       exitedAt: null,
       exitReason: null,
       createdAt: new Date('2026-01-01'),

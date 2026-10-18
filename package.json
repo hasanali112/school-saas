@@ -19,7 +19,11 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "db:seed": "nest build && node dist/database/seed"
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
+    "migration:run": "yarn typeorm migration:run",
+    "migration:revert": "yarn typeorm migration:revert",
+    "migration:create": "typeorm migration:create",
+    "db:seed": "ts-node -r tsconfig-paths/register src/database/seed.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^4",
@@ -36,7 +40,6 @@
     "axios": "^1.20.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
@@ -79,22 +82,32 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": "<rootDir>/../test/tsconfig.jest.json"
+        }
+      ]
     },
     "collectCoverageFrom": [
       "**/*.ts",
       "!**/*.spec.ts",
       "!main.ts",
-      "!**/schema/**",
-      "!**/*.module.ts"
+      "!database/**",
+      "!**/*.module.ts",
+      "!**/entities/**"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
+      "typeorm-compat\\.js$": "<rootDir>/../test/utils/typeorm-compat.stub.ts",
       "^@common/(.*)$": "<rootDir>/common/$1",
       "^@config/(.*)$": "<rootDir>/config/$1",
       "^@module/(.*)$": "<rootDir>/module/$1",
       "^@test/(.*)$": "<rootDir>/../test/$1"
-    }
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!@nestjs/typeorm/)"
+    ]
   }
 }

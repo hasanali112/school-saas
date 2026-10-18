@@ -6,24 +6,26 @@ export interface Page<T> {
   total: number;
 }
 
+/** Which page was asked for; `PaginationQueryDto` satisfies it. */
+export interface PageRequest {
+  page: number;
+  limit: number;
+}
+
 /** Envelope-shaped page used by services and returned across the wire. */
 export interface Paginated<T> {
   items: T[];
   meta: PageMeta;
 }
 
-/** Build a `Paginated<T>` envelope from a raw repository page. */
 export function paginate<T>(
-  page: Page<T>,
-  query: { page: number; limit: number },
+  items: T[],
+  total: number,
+  request: PageRequest,
 ): Paginated<T> {
   return {
-    items: page.rows,
-    meta: {
-      total: page.total,
-      page: query.page,
-      limit: query.limit,
-    },
+    items,
+    meta: { total, page: request.page, limit: request.limit },
   };
 }
 

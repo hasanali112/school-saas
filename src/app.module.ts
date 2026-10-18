@@ -10,12 +10,17 @@ import { AllExceptionsFilter } from '@common/filters/all-exceptions.filter';
 import { LoggerMiddleware } from '@common/middleware/logger.middleware';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DatabaseModule } from '@common/services/database/database.module';
 import { TypeOrmConfigService } from '@common/services/database/typeorm.config.service';
 import { appConfig } from '@config/app/app.config';
 import { authConfig } from '@config/auth/auth.config';
 import { databaseConfig } from '@config/database/database.config';
 import { httpConfig } from '@config/http/http.config';
 import { smsConfig } from '@config/sms/sms.config';
+import { AcademicsModule } from '@module/academics/academics.module';
+import { AuditModule } from '@module/audit/audit.module';
+import { EventsModule } from '@module/events/events.module';
+import { TimeModule } from '@module/time/time.module';
 import { SmsModule } from '@module/sms/sms.module';
 import { ConsentModule } from '@module/consent/consent.module';
 import { LeaveModule } from '@module/leave/leave.module';
@@ -28,20 +33,32 @@ import { AuthModule } from '@module/auth/auth.module';
 import { AuthGuard } from '@module/auth/guards/auth.guard';
 import { RolesGuard } from '@module/auth/guards/roles.guard';
 
+const ONE_MINUTE_MS = 60_000;
+/** Per-IP requests per minute; credential and callback routes set their own. */
+const DEFAULT_RATE_LIMIT = 300;
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      envFilePath: ['.env'],
+      envFilePath: ['.env.local', '.env'],
       load: [appConfig, databaseConfig, authConfig, httpConfig, smsConfig],
     }),
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfigService,
     }),
+    ThrottlerModule.forRoot([
+      { ttl: ONE_MINUTE_MS, limit: DEFAULT_RATE_LIMIT },
+    ]),
+    DatabaseModule,
+    TimeModule,
+    EventsModule,
+    AuditModule,
     AuthModule,
     HealthModule,
     InstitutionsModule,
+    AcademicsModule,
     UsersModule,
     StudentsModule,
     AttendanceModule,

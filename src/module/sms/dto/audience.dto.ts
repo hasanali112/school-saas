@@ -7,14 +7,15 @@ import {
   IsUUID,
   Matches,
 } from 'class-validator';
-import { Role } from '@modules/auth/roles';
+import { Role } from '@module/auth/domain/role';
 import { BD_PHONE_REGEX } from '@common/utils/phone/phone';
+import type { AudienceSelection } from '../domain/audience';
 
 /** One batch tops out at a whole institution; bigger sends are split by the caller. */
 const MAX_EXPLICIT_RECIPIENTS = 2000;
 
 /** Any combination; guardians come from class/section/students, staff from roles, plus ad-hoc phones. */
-export class AudienceDto {
+export class AudienceDto implements AudienceSelection {
   @IsOptional()
   @IsUUID()
   classId?: string;

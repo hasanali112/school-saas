@@ -1,4 +1,5 @@
-import { EnrolmentRow, StudentRow } from '@database/schema';
+import type { Enrolment, RosterEntry } from '../domain/enrolment';
+import { StudentStatus } from '../domain/student';
 
 export class EnrolmentResponseDto {
   readonly id: string;
@@ -9,22 +10,22 @@ export class EnrolmentResponseDto {
   readonly fourthSubjectId: string | null;
   readonly religionSubjectId: string | null;
 
-  private constructor(row: EnrolmentRow) {
-    this.id = row.id;
-    this.studentId = row.studentId;
-    this.sessionId = row.sessionId;
-    this.sectionId = row.sectionId;
-    this.rollNo = row.rollNo;
-    this.fourthSubjectId = row.fourthSubjectId;
-    this.religionSubjectId = row.religionSubjectId;
+  private constructor(enrolment: Enrolment) {
+    this.id = enrolment.id;
+    this.studentId = enrolment.studentId;
+    this.sessionId = enrolment.sessionId;
+    this.sectionId = enrolment.sectionId;
+    this.rollNo = enrolment.rollNo;
+    this.fourthSubjectId = enrolment.fourthSubjectId;
+    this.religionSubjectId = enrolment.religionSubjectId;
   }
 
-  static from(row: EnrolmentRow): EnrolmentResponseDto {
-    return new EnrolmentResponseDto(row);
+  static from(enrolment: Enrolment): EnrolmentResponseDto {
+    return new EnrolmentResponseDto(enrolment);
   }
 
-  static fromMany(rows: readonly EnrolmentRow[]): EnrolmentResponseDto[] {
-    return rows.map((row) => EnrolmentResponseDto.from(row));
+  static fromMany(enrolments: readonly Enrolment[]): EnrolmentResponseDto[] {
+    return enrolments.map((enrolment) => EnrolmentResponseDto.from(enrolment));
   }
 }
 
@@ -36,20 +37,20 @@ export class RosterEntryDto {
   readonly admissionNo: string;
   readonly nameBn: string;
   readonly nameEn: string;
-  readonly status: StudentRow['status'];
+  readonly status: StudentStatus;
 
-  private constructor(enrolment: EnrolmentRow, student: StudentRow) {
-    this.enrolmentId = enrolment.id;
-    this.studentId = student.id;
-    this.rollNo = enrolment.rollNo;
-    this.admissionNo = student.admissionNo;
-    this.nameBn = student.nameBn;
-    this.nameEn = student.nameEn;
-    this.status = student.status;
+  private constructor(entry: RosterEntry) {
+    this.enrolmentId = entry.enrolmentId;
+    this.studentId = entry.studentId;
+    this.rollNo = entry.rollNo;
+    this.admissionNo = entry.admissionNo;
+    this.nameBn = entry.nameBn;
+    this.nameEn = entry.nameEn;
+    this.status = entry.status;
   }
 
-  static from(enrolment: EnrolmentRow, student: StudentRow): RosterEntryDto {
-    return new RosterEntryDto(enrolment, student);
+  static from(entry: RosterEntry): RosterEntryDto {
+    return new RosterEntryDto(entry);
   }
 }
 

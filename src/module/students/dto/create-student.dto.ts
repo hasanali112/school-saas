@@ -6,28 +6,12 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Religion } from '@modules/academics/dto/create-subject.dto';
+import { Religion } from '@module/academics/domain/subject';
+import { BloodGroup, Gender } from '../domain/student';
 
 const NAME_MIN = 1;
 const NAME_MAX = 120;
 const ADDRESS_MAX = 500;
-
-export enum Gender {
-  Male = 'male',
-  Female = 'female',
-  Other = 'other',
-}
-
-export enum BloodGroup {
-  APos = 'A+',
-  ANeg = 'A-',
-  BPos = 'B+',
-  BNeg = 'B-',
-  ABPos = 'AB+',
-  ABNeg = 'AB-',
-  OPos = 'O+',
-  ONeg = 'O-',
-}
 
 export class CreateStudentDto {
   @IsString()

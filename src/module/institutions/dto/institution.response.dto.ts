@@ -1,4 +1,4 @@
-import { InstitutionRow } from '@database/schema';
+import type { Institution } from '../domain/institution';
 
 export class InstitutionResponseDto {
   readonly id: string;
@@ -10,7 +10,7 @@ export class InstitutionResponseDto {
   readonly addressEn: string | null;
   readonly phone: string | null;
 
-  private constructor(row: InstitutionRow) {
+  private constructor(row: Institution) {
     this.id = row.id;
     this.slug = row.slug;
     this.nameBn = row.nameBn;
@@ -21,7 +21,7 @@ export class InstitutionResponseDto {
     this.phone = row.phone;
   }
 
-  static from(row: InstitutionRow): InstitutionResponseDto {
+  static from(row: Institution): InstitutionResponseDto {
     return new InstitutionResponseDto(row);
   }
 }

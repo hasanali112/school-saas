@@ -3,16 +3,28 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
-import { todayLocal } from '@shared/time/local-date';
+import { todayLocal } from '@module/time/domain/local-date';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@modules/auth/roles';
-import { DatabaseService } from '@database/database.service';
-import { AttendanceRecordRow, LeaveApplicationRow } from '@database/schema';
-import { HolidaysRepository } from '@modules/academics/holidays/holidays.repository';
-import { SessionsRepository } from '@modules/academics/sessions/sessions.repository';
-import { AttendanceRepository } from '@modules/attendance/attendance.repository';
-import { LeaveRepository } from '@modules/leave/leave.repository';
-import { AuditRepository } from '@shared/audit/audit.repository';
+import { Role } from '@module/auth/domain/role';
+import { DataSource } from 'typeorm';
+import { fakeDataSource } from '@test/utils/fake-data-source';
+import { HolidaysRepositoryPort } from '@module/academics/port/holidays.repository.port';
+import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
+import { TeachersRepositoryPort } from '@module/academics/port/teachers.repository.port';
+import { AttendanceStatus } from '@module/attendance/domain/attendance';
+import type { AttendanceRecord } from '@module/attendance/domain/attendance';
+import { AttendanceRepositoryPort } from '@module/attendance/port/attendance.repository.port';
+import { AuditLogPort } from '@module/audit/port/audit-log.port';
+import {
+  ApplicantKind,
+  LeaveAppliesTo,
+  LeaveStatus,
+} from '@module/leave/domain/leave';
+import type { LeaveApplication } from '@module/leave/domain/leave';
+import { LeaveRepositoryPort } from '@module/leave/port/leave.repository.port';
+import type { RosterRow } from '@module/students/domain/enrolment';
+import { StudentStatus } from '@module/students/domain/student';
+import { EnrolmentsRepositoryPort } from '@module/students/port/enrolments.repository.port';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -22,6 +34,38 @@ const SECTION_ID = '44444444-4444-4444-8444-444444444444';
 const SESSION_ID = '55555555-5555-4555-8555-555555555555';
 const ENROLMENT_ID = '66666666-6666-4666-8666-666666666666';
 const TYPE_ID = '77777777-7777-4777-8777-777777777777';
+const rosterRow: RosterRow = {
+  enrolment: {
+    id: ENROLMENT_ID,
+    institutionId: INSTITUTION_ID,
+    studentId: 'stu',
+    sessionId: SESSION_ID,
+    sectionId: SECTION_ID,
+    rollNo: 1,
+    fourthSubjectId: null,
+    religionSubjectId: null,
+    createdAt: new Date('2026-01-01'),
+  },
+  student: {
+    id: 'stu',
+    institutionId: INSTITUTION_ID,
+    admissionNo: 'A-1',
+    nameBn: 'ক',
+    nameEn: 'A',
+    dateOfBirth: null,
+    gender: null,
+    bloodGroup: null,
+    religion: null,
+    birthCertificateNo: null,
+    addressBn: null,
+    addressEn: null,
+    photoKey: null,
+    status: StudentStatus.Active,
+    exitedAt: null,
+    exitReason: null,
+    createdAt: new Date('2026-01-01'),
+  },
+};
 
 describe('Attendance & leave (e2e)', () => {
   let app: INestApplication;
@@ -30,26 +74,32 @@ describe('Attendance & leave (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const attendance = createMock<AttendanceRepository>();
-  const leave = createMock<LeaveRepository>();
-  const sessions = createMock<SessionsRepository>();
-  const holidays = createMock<HolidaysRepository>();
-  const audit = createMock<AuditRepository>();
+  const attendance = createMock<AttendanceRepositoryPort>();
+  const leave = createMock<LeaveRepositoryPort>();
+  const sessions = createMock<SessionsRepositoryPort>();
+  const holidays = createMock<HolidaysRepositoryPort>();
+  const teachers = createMock<TeachersRepositoryPort>();
+  const enrolments = createMock<EnrolmentsRepositoryPort>();
+  const audit = createMock<AuditLogPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(AttendanceRepository)
+      .overrideProvider(AttendanceRepositoryPort)
       .useValue(attendance)
-      .overrideProvider(LeaveRepository)
+      .overrideProvider(LeaveRepositoryPort)
       .useValue(leave)
-      .overrideProvider(SessionsRepository)
+      .overrideProvider(SessionsRepositoryPort)
       .useValue(sessions)
-      .overrideProvider(HolidaysRepository)
+      .overrideProvider(HolidaysRepositoryPort)
       .useValue(holidays)
-      .overrideProvider(AuditRepository)
+      .overrideProvider(TeachersRepositoryPort)
+      .useValue(teachers)
+      .overrideProvider(EnrolmentsRepositoryPort)
+      .useValue(enrolments)
+      .overrideProvider(AuditLogPort)
       .useValue(audit)
-      .overrideProvider(DatabaseService)
-      .useValue({})
+      .overrideProvider(DataSource)
+      .useValue(fakeDataSource())
       .compile();
     app = setupApp(moduleRef.createNestApplication());
     await app.init();
@@ -71,30 +121,35 @@ describe('Attendance & leave (e2e)', () => {
     jest.clearAllMocks();
     sessions.findCurrentId.mockResolvedValue(SESSION_ID);
     holidays.existsOn.mockResolvedValue(false);
-    attendance.findAssignedSectionIds.mockResolvedValue(new Set([SECTION_ID]));
-    attendance.findSheet.mockResolvedValue([
-      {
-        enrolmentId: ENROLMENT_ID,
-        studentId: 'stu',
-        rollNo: 1,
-        nameBn: 'ক',
-        nameEn: 'A',
-        status: null,
-      },
-    ]);
-    attendance.findStudentsOnApprovedLeave.mockResolvedValue(new Set());
+    teachers.findForTeacher.mockResolvedValue({
+      classTeacherOf: [],
+      subjectAssignments: [
+        {
+          id: 'ta',
+          institutionId: INSTITUTION_ID,
+          sessionId: SESSION_ID,
+          sectionId: SECTION_ID,
+          subjectId: 'math',
+          teacherUserId: 'teacher',
+          createdAt: new Date('2026-01-01'),
+        },
+      ],
+    });
+    enrolments.findRoster.mockResolvedValue([rosterRow]);
+    leave.findStudentsOnApprovedLeave.mockResolvedValue(new Set());
+    attendance.findRecords.mockResolvedValue([]);
     attendance.upsertMany.mockImplementation((rows) =>
       Promise.resolve(
-        rows.map((r, i): AttendanceRecordRow => ({
+        rows.map((r, i): AttendanceRecord => ({
           ...r,
           id: `r${i}`,
-          period: r.period ?? 0,
           markedAt: new Date(),
           updatedBy: null,
           updatedAt: null,
         })),
       ),
     );
+    audit.record.mockResolvedValue();
   });
 
   it('POST /api/attendance/sections/:id validates entries and status values', async () => {
@@ -142,17 +197,16 @@ describe('Attendance & leave (e2e)', () => {
       .send(past)
       .expect(400);
 
-    attendance.findExisting.mockResolvedValue([]);
-    audit.insert.mockResolvedValue();
     await api()
       .post(`/api/attendance/sections/${SECTION_ID}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ ...past, reason: 'Paper register recovered' })
       .expect(200);
-    expect(audit.insert).toHaveBeenCalledWith([
+    expect(audit.record).toHaveBeenCalledWith([
       expect.objectContaining({
         action: 'attendance.backdated',
-        institutionId: INSTITUTION_ID,
+        actorId: 'admin',
+        reason: 'Paper register recovered',
       }),
     ]);
   });
@@ -168,7 +222,7 @@ describe('Attendance & leave (e2e)', () => {
         studentId: 'stu',
         date: '2026-03-01',
         period: 0,
-        status: 'present',
+        status: AttendanceStatus.Present,
         markedBy: 'teacher',
         markedAt: new Date(),
         updatedBy: null,
@@ -194,18 +248,18 @@ describe('Attendance & leave (e2e)', () => {
       id: TYPE_ID,
       institutionId: INSTITUTION_ID,
       name: 'Casual',
-      appliesTo: 'staff',
+      appliesTo: LeaveAppliesTo.Staff,
       maxDaysPerYear: null,
       createdAt: new Date(),
     });
     leave.insertApplication.mockImplementation(
-      (data): Promise<LeaveApplicationRow> =>
+      (data): Promise<LeaveApplication> =>
         Promise.resolve({
           ...data,
           id: 'app',
           userId: data.userId ?? null,
           studentId: data.studentId ?? null,
-          status: 'pending',
+          status: LeaveStatus.Pending,
           decidedBy: null,
           decidedAt: null,
           decisionNote: null,
@@ -244,17 +298,17 @@ describe('Attendance & leave (e2e)', () => {
       .send({})
       .expect(403);
 
-    const row: LeaveApplicationRow = {
+    const row: LeaveApplication = {
       id: appId,
       institutionId: INSTITUTION_ID,
       leaveTypeId: TYPE_ID,
-      applicantKind: 'staff',
+      applicantKind: ApplicantKind.Staff,
       userId: 'teacher',
       studentId: null,
       fromDate: '2026-04-01',
       toDate: '2026-04-03',
       reason: 'x',
-      status: 'pending',
+      status: LeaveStatus.Pending,
       appliedBy: 'teacher',
       decidedBy: null,
       decidedAt: null,
@@ -264,10 +318,9 @@ describe('Attendance & leave (e2e)', () => {
     leave.findById.mockResolvedValue(row);
     leave.decide.mockResolvedValue({
       ...row,
-      status: 'approved',
+      status: LeaveStatus.Approved,
       decidedBy: 'admin',
     });
-    audit.insert.mockResolvedValue();
     const approved = await api()
       .post(`/api/leave/applications/${appId}/approve`)
       .set('Authorization', `Bearer ${adminToken}`)
