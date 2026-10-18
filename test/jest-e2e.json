@@ -8,17 +8,24 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "tsconfig": "<rootDir>/tsconfig.jest.json"
+      }
+    ]
   },
   "moduleNameMapper": {
+    "typeorm-compat\\.js$": "<rootDir>/utils/typeorm-compat.stub.ts",
     "^@common/(.*)$": "<rootDir>/../src/common/$1",
     "^@config/(.*)$": "<rootDir>/../src/config/$1",
-    "^@database/(.*)$": "<rootDir>/../src/database/$1",
-    "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
-    "^@modules/(.*)$": "<rootDir>/../src/modules/$1",
+    "^@module/(.*)$": "<rootDir>/../src/module/$1",
     "^@test/(.*)$": "<rootDir>/$1"
   },
   "setupFiles": [
     "<rootDir>/setup-env.ts"
+  ],
+  "transformIgnorePatterns": [
+    "/node_modules/(?!@nestjs/typeorm/)"
   ]
 }

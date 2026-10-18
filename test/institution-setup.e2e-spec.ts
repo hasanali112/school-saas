@@ -4,12 +4,17 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@modules/auth/roles';
-import { DatabaseService } from '@database/database.service';
-import { HolidaysRepository } from '@modules/academics/holidays/holidays.repository';
-import { SessionsRepository } from '@modules/academics/sessions/sessions.repository';
-import { SubjectsRepository } from '@modules/academics/subjects/subjects.repository';
-import { TeachersRepository } from '@modules/academics/teachers/teachers.repository';
+import { Role } from '@module/auth/domain/role';
+import { DataSource } from 'typeorm';
+import { fakeDataSource } from '@test/utils/fake-data-source';
+import { HolidaysRepositoryPort } from '@module/academics/port/holidays.repository.port';
+import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
+import { SubjectsRepositoryPort } from '@module/academics/port/subjects.repository.port';
+import { TeachersRepositoryPort } from '@module/academics/port/teachers.repository.port';
+import {
+  ClassSubjectRole,
+  SubjectKind,
+} from '@module/academics/domain/subject';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -27,23 +32,23 @@ describe('Institution setup (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const subjects = createMock<SubjectsRepository>();
-  const teachers = createMock<TeachersRepository>();
-  const sessions = createMock<SessionsRepository>();
-  const holidays = createMock<HolidaysRepository>();
+  const subjects = createMock<SubjectsRepositoryPort>();
+  const teachers = createMock<TeachersRepositoryPort>();
+  const sessions = createMock<SessionsRepositoryPort>();
+  const holidays = createMock<HolidaysRepositoryPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(SubjectsRepository)
+      .overrideProvider(SubjectsRepositoryPort)
       .useValue(subjects)
-      .overrideProvider(TeachersRepository)
+      .overrideProvider(TeachersRepositoryPort)
       .useValue(teachers)
-      .overrideProvider(SessionsRepository)
+      .overrideProvider(SessionsRepositoryPort)
       .useValue(sessions)
-      .overrideProvider(HolidaysRepository)
+      .overrideProvider(HolidaysRepositoryPort)
       .useValue(holidays)
-      .overrideProvider(DatabaseService)
-      .useValue({})
+      .overrideProvider(DataSource)
+      .useValue(fakeDataSource())
       .compile();
     app = setupApp(moduleRef.createNestApplication());
     await app.init();
@@ -86,7 +91,7 @@ describe('Institution setup (e2e)', () => {
           institutionId: INSTITUTION_ID,
           classId: SECTION_ID,
           subjectId: SUBJECT_ID,
-          role: 'compulsory',
+          role: ClassSubjectRole.Compulsory,
           createdAt: new Date(),
         },
         subject: {
@@ -95,7 +100,7 @@ describe('Institution setup (e2e)', () => {
           code: '109',
           nameBn: 'গণিত',
           nameEn: 'Mathematics',
-          kind: 'general',
+          kind: SubjectKind.General,
           religion: null,
           createdAt: new Date(),
         },

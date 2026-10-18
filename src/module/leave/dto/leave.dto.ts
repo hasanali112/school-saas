@@ -10,26 +10,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-
-export const LeaveAppliesTo = {
-  Staff: 'staff',
-  Student: 'student',
-  Both: 'both',
-} as const;
-export type LeaveAppliesTo =
-  (typeof LeaveAppliesTo)[keyof typeof LeaveAppliesTo];
-
-export enum LeaveStatus {
-  Pending = 'pending',
-  Approved = 'approved',
-  Rejected = 'rejected',
-  Cancelled = 'cancelled',
-}
-
-export enum ApplicantKind {
-  Staff = 'staff',
-  Student = 'student',
-}
+import { ApplicantKind, LeaveAppliesTo, LeaveStatus } from '../domain/leave';
 
 const MAX_DAYS_PER_YEAR = 366;
 

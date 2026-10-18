@@ -2,37 +2,38 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
-import { PasswordService } from '@modules/auth/password.service';
+import { ScryptPasswordHasher } from '@module/auth/adapter/scrypt.password-hasher';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@modules/auth/roles';
-import { DatabaseService } from '@database/database.service';
-import { UserRow } from '@database/schema';
-import { AuthRepository } from '@modules/auth/auth.repository';
-import { OTP_SENDER } from '@modules/auth/otp.sender';
-import type { OtpSender } from '@modules/auth/otp.sender';
+import { Role } from '@module/auth/domain/role';
+import { DataSource } from 'typeorm';
+import { fakeDataSource } from '@test/utils/fake-data-source';
+import { UserStatus } from '@module/users/domain/user';
+import type { User } from '@module/users/domain/user';
+import { AuthRepositoryPort } from '@module/auth/port/auth.repository.port';
+import { OtpSenderPort } from '@module/auth/port/otp-sender.port';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
 
 const INSTITUTION_ID = '11111111-1111-4111-8111-111111111111';
-let adminUser: UserRow;
+let adminUser: User;
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const repo = createMock<AuthRepository>();
-  const sender = createMock<OtpSender>();
+  const repo = createMock<AuthRepositoryPort>();
+  const sender = createMock<OtpSenderPort>();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(AuthRepository)
+      .overrideProvider(AuthRepositoryPort)
       .useValue(repo)
-      .overrideProvider(OTP_SENDER)
+      .overrideProvider(OtpSenderPort)
       .useValue(sender)
-      .overrideProvider(DatabaseService)
-      .useValue({})
+      .overrideProvider(DataSource)
+      .useValue(fakeDataSource())
       .compile();
     app = setupApp(moduleRef.createNestApplication());
     await app.init();
@@ -42,9 +43,9 @@ describe('Auth (e2e)', () => {
       institutionId: INSTITUTION_ID,
       phone: '01700000000',
       name: 'Head',
-      passwordHash: await new PasswordService().hash('Admin@12345'),
+      passwordHash: await new ScryptPasswordHasher().hash('Admin@12345'),
       roles: [Role.InstituteHead],
-      status: 'active',
+      status: UserStatus.Active,
       createdAt: new Date(),
     };
   });

@@ -1,6 +1,5 @@
-import { AttendanceRecordRow } from '@database/schema';
-
-export type AttendanceStatusValue = AttendanceRecordRow['status'];
+import { AttendanceStatus } from '../domain/attendance';
+import type { DayStatuses, StatusCounts } from '../domain/attendance';
 
 export class SheetEntryDto {
   constructor(
@@ -10,7 +9,7 @@ export class SheetEntryDto {
     readonly nameBn: string,
     readonly nameEn: string,
     /** Null when nothing has been marked yet for this date/period. */
-    readonly status: AttendanceStatusValue | null,
+    readonly status: AttendanceStatus | null,
   ) {}
 }
 
@@ -26,8 +25,8 @@ export class AttendanceSheetDto {
 }
 
 /** Staff marking only reports how many rows were written. */
-export interface MarkedCountDto {
-  marked: number;
+export class MarkedCountDto {
+  constructor(readonly marked: number) {}
 }
 
 export class MarkResultDto {
@@ -35,7 +34,7 @@ export class MarkResultDto {
     readonly date: string,
     readonly period: number,
     readonly marked: number,
-    readonly counts: Record<AttendanceStatusValue, number>,
+    readonly counts: StatusCounts,
     readonly backdated: boolean,
   ) {}
 }
@@ -47,7 +46,7 @@ export class RegisterRowDto {
     readonly nameBn: string,
     readonly nameEn: string,
     /** ISO date → status, only for dates with a record. */
-    readonly days: Record<string, AttendanceStatusValue>,
+    readonly days: DayStatuses,
     readonly presentDays: number,
   ) {}
 }
@@ -89,6 +88,6 @@ export class StaffAttendanceEntryResponseDto {
   constructor(
     readonly userId: string,
     readonly name: string,
-    readonly status: AttendanceStatusValue | null,
+    readonly status: AttendanceStatus | null,
   ) {}
 }

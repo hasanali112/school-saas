@@ -14,15 +14,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-
-export const AttendanceStatus = {
-  Present: 'present',
-  Absent: 'absent',
-  Late: 'late',
-  Leave: 'leave',
-} as const;
-export type AttendanceStatus =
-  (typeof AttendanceStatus)[keyof typeof AttendanceStatus];
+import { AttendanceStatus, DAILY_PERIOD } from '../domain/attendance';
 
 const MAX_PERIOD = 12;
 const MAX_ENTRIES = 500;
@@ -49,7 +41,7 @@ export class MarkAttendanceDto {
   @IsInt()
   @Min(0)
   @Max(MAX_PERIOD)
-  period: number = 0;
+  period: number = DAILY_PERIOD;
 
   /** Required when marking a past date (admin only); stored in the audit log. */
   @IsOptional()
@@ -78,7 +70,7 @@ export class AttendanceSheetQueryDto {
   @IsInt()
   @Min(0)
   @Max(MAX_PERIOD)
-  period: number = 0;
+  period: number = DAILY_PERIOD;
 }
 
 export class MonthQueryDto {

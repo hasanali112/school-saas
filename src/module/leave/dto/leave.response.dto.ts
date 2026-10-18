@@ -1,74 +1,73 @@
-import { LeaveApplicationRow, LeaveTypeRow } from '@database/schema';
+import {
+  ApplicantKind,
+  inclusiveDays,
+  LeaveAppliesTo,
+  LeaveStatus,
+} from '../domain/leave';
+import type { LeaveApplication, LeaveType } from '../domain/leave';
 
 export class LeaveTypeResponseDto {
   readonly id: string;
   readonly name: string;
-  readonly appliesTo: LeaveTypeRow['appliesTo'];
+  readonly appliesTo: LeaveAppliesTo;
   readonly maxDaysPerYear: number | null;
 
-  private constructor(row: LeaveTypeRow) {
-    this.id = row.id;
-    this.name = row.name;
-    this.appliesTo = row.appliesTo;
-    this.maxDaysPerYear = row.maxDaysPerYear;
+  private constructor(type: LeaveType) {
+    this.id = type.id;
+    this.name = type.name;
+    this.appliesTo = type.appliesTo;
+    this.maxDaysPerYear = type.maxDaysPerYear;
   }
 
-  static from(row: LeaveTypeRow): LeaveTypeResponseDto {
-    return new LeaveTypeResponseDto(row);
+  static from(type: LeaveType): LeaveTypeResponseDto {
+    return new LeaveTypeResponseDto(type);
   }
 
-  static fromMany(rows: readonly LeaveTypeRow[]): LeaveTypeResponseDto[] {
-    return rows.map((row) => LeaveTypeResponseDto.from(row));
+  static fromMany(types: readonly LeaveType[]): LeaveTypeResponseDto[] {
+    return types.map((type) => LeaveTypeResponseDto.from(type));
   }
 }
 
 export class LeaveApplicationResponseDto {
   readonly id: string;
   readonly leaveTypeId: string;
-  readonly applicantKind: LeaveApplicationRow['applicantKind'];
+  readonly applicantKind: ApplicantKind;
   readonly userId: string | null;
   readonly studentId: string | null;
   readonly fromDate: string;
   readonly toDate: string;
   readonly days: number;
   readonly reason: string;
-  readonly status: LeaveApplicationRow['status'];
+  readonly status: LeaveStatus;
   readonly decidedBy: string | null;
   readonly decidedAt: Date | null;
   readonly decisionNote: string | null;
   readonly createdAt: Date;
 
-  private constructor(row: LeaveApplicationRow) {
-    this.id = row.id;
-    this.leaveTypeId = row.leaveTypeId;
-    this.applicantKind = row.applicantKind;
-    this.userId = row.userId;
-    this.studentId = row.studentId;
-    this.fromDate = row.fromDate;
-    this.toDate = row.toDate;
-    this.days = inclusiveDays(row.fromDate, row.toDate);
-    this.reason = row.reason;
-    this.status = row.status;
-    this.decidedBy = row.decidedBy;
-    this.decidedAt = row.decidedAt;
-    this.decisionNote = row.decisionNote;
-    this.createdAt = row.createdAt;
+  private constructor(application: LeaveApplication) {
+    this.id = application.id;
+    this.leaveTypeId = application.leaveTypeId;
+    this.applicantKind = application.applicantKind;
+    this.userId = application.userId;
+    this.studentId = application.studentId;
+    this.fromDate = application.fromDate;
+    this.toDate = application.toDate;
+    this.days = inclusiveDays(application.fromDate, application.toDate);
+    this.reason = application.reason;
+    this.status = application.status;
+    this.decidedBy = application.decidedBy;
+    this.decidedAt = application.decidedAt;
+    this.decisionNote = application.decisionNote;
+    this.createdAt = application.createdAt;
   }
 
-  static from(row: LeaveApplicationRow): LeaveApplicationResponseDto {
-    return new LeaveApplicationResponseDto(row);
+  static from(application: LeaveApplication): LeaveApplicationResponseDto {
+    return new LeaveApplicationResponseDto(application);
   }
 
   static fromMany(
-    rows: readonly LeaveApplicationRow[],
+    applications: readonly LeaveApplication[],
   ): LeaveApplicationResponseDto[] {
-    return rows.map((row) => LeaveApplicationResponseDto.from(row));
+    return applications.map((a) => LeaveApplicationResponseDto.from(a));
   }
-}
-
-const MS_PER_DAY = 86_400_000;
-
-/** Calendar days from `from` to `to`, both inclusive; ISO dates only. */
-export function inclusiveDays(from: string, to: string): number {
-  return Math.round((Date.parse(to) - Date.parse(from)) / MS_PER_DAY) + 1;
 }

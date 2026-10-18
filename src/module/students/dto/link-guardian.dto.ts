@@ -7,14 +7,7 @@ import {
   Matches,
 } from 'class-validator';
 import { BD_PHONE_MESSAGE, BD_PHONE_REGEX } from '@common/utils/phone/phone';
-
-export const GuardianRelation = {
-  Father: 'father',
-  Mother: 'mother',
-  Other: 'other',
-} as const;
-export type GuardianRelation =
-  (typeof GuardianRelation)[keyof typeof GuardianRelation];
+import { GuardianRelation } from '../domain/guardian';
 
 /** Creates the guardian if the phone is new, otherwise links the existing one. */
 export class LinkGuardianDto {

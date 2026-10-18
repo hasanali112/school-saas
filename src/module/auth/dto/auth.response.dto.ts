@@ -1,5 +1,5 @@
-import { Role } from '@modules/auth/roles';
-import { UserRow } from '@database/schema';
+import type { User } from '@module/users/domain/user';
+import { Role } from '../domain/role';
 
 export class AuthUserDto {
   readonly id: string;
@@ -8,16 +8,16 @@ export class AuthUserDto {
   readonly name: string;
   readonly roles: Role[];
 
-  private constructor(row: UserRow) {
-    this.id = row.id;
-    this.institutionId = row.institutionId;
-    this.phone = row.phone;
-    this.name = row.name;
-    this.roles = row.roles as Role[];
+  private constructor(user: User) {
+    this.id = user.id;
+    this.institutionId = user.institutionId;
+    this.phone = user.phone;
+    this.name = user.name;
+    this.roles = user.roles;
   }
 
-  static from(row: UserRow): AuthUserDto {
-    return new AuthUserDto(row);
+  static from(user: User): AuthUserDto {
+    return new AuthUserDto(user);
   }
 }
 

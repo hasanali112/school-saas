@@ -9,26 +9,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
+import { SmsBatchStatus, SmsPurpose } from '../domain/sms';
 import { AudienceDto } from './audience.dto';
 import { TEMPLATE_KEY_PATTERN } from './template.dto';
-
-export enum SmsPurpose {
-  Absence = 'absence',
-  DueReminder = 'due_reminder',
-  Result = 'result',
-  Admission = 'admission',
-  General = 'general',
-}
-
-export const SmsBatchStatus = {
-  Draft: 'draft',
-  Sending: 'sending',
-  Sent: 'sent',
-  Failed: 'failed',
-  Cancelled: 'cancelled',
-} as const;
-export type SmsBatchStatus =
-  (typeof SmsBatchStatus)[keyof typeof SmsBatchStatus];
 
 /** Ten Unicode parts; the preview shows the real segment count before anything is sent. */
 const MAX_MESSAGE_LENGTH = 670;

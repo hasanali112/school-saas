@@ -1,4 +1,4 @@
-import { DomainEvent } from '@shared/events/domain-event';
+import { DomainEvent } from '@module/events/domain/domain-event';
 
 /** Emitted once per marking call; absence SMS (F1-12) and attendance watch (F3-03d) subscribe. */
 export class AttendanceMarkedEvent extends DomainEvent {

@@ -5,22 +5,7 @@ import {
   IsString,
   Length,
 } from 'class-validator';
-
-export const ConsentPurpose = {
-  Sms: 'sms',
-  App: 'app',
-  AiProcessing: 'ai_processing',
-  Photo: 'photo',
-} as const;
-export type ConsentPurpose =
-  (typeof ConsentPurpose)[keyof typeof ConsentPurpose];
-
-export enum ConsentSource {
-  App = 'app',
-  Paper = 'paper',
-  Phone = 'phone',
-  Office = 'office',
-}
+import { ConsentPurpose, ConsentSource } from '../domain/consent';
 
 export class RecordConsentDto {
   @IsEnum(ConsentPurpose)

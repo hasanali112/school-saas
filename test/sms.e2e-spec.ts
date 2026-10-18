@@ -4,20 +4,28 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@modules/auth/roles';
-import { DatabaseService } from '@database/database.service';
-import { InstitutionRow, SmsBatchRow, SmsMessageRow } from '@database/schema';
-import { SessionsRepository } from '@modules/academics/sessions/sessions.repository';
-import { ConsentRepository } from '@modules/consent/consent.repository';
-import { InstitutionsRepository } from '@modules/institutions/institutions.repository';
-import { AudienceRepository } from '@modules/sms/audience/audience.repository';
-import { BalanceRepository } from '@modules/sms/balance/balance.repository';
-import { BatchesRepository } from '@modules/sms/batches/batches.repository';
-import { DeliveryReportsRepository } from '@modules/sms/delivery/delivery-reports.repository';
-import { SMS_GATEWAY } from '@modules/sms/gateway/sms.gateway';
-import type { SmsGateway } from '@modules/sms/gateway/sms.gateway';
-import { TemplatesRepository } from '@modules/sms/templates/templates.repository';
-import { AuditRepository } from '@shared/audit/audit.repository';
+import { Role } from '@module/auth/domain/role';
+import { DataSource } from 'typeorm';
+import { fakeDataSource } from '@test/utils/fake-data-source';
+import type { Institution } from '@module/institutions/domain/institution';
+import type { SmsBatch, SmsMessage } from '@module/sms/domain/sms-batch';
+import { SessionsRepositoryPort } from '@module/academics/port/sessions.repository.port';
+import { ConsentRepositoryPort } from '@module/consent/port/consent.repository.port';
+import { InstitutionsRepositoryPort } from '@module/institutions/port/institutions.repository.port';
+import { AudienceRepositoryPort } from '@module/sms/port/audience.repository.port';
+import { BalanceRepositoryPort } from '@module/sms/port/balance.repository.port';
+import { BatchesRepositoryPort } from '@module/sms/port/batches.repository.port';
+import { DeliveryReportsRepositoryPort } from '@module/sms/port/delivery-reports.repository.port';
+import { SmsGatewayPort } from '@module/sms/port/sms-gateway.port';
+import { TemplatesRepositoryPort } from '@module/sms/port/templates.repository.port';
+import { AuditLogPort } from '@module/audit/port/audit-log.port';
+import { ConsentPurpose, ConsentSource } from '@module/consent/domain/consent';
+import type { Consent } from '@module/consent/domain/consent';
+import {
+  SmsBatchStatus,
+  SmsMessageStatus,
+  SmsPurpose,
+} from '@module/sms/domain/sms';
 import { createMock } from '@test/utils/create-mock';
 import { AppModule } from '../src/app.module';
 import { setupApp } from '../src/app.setup';
@@ -27,7 +35,7 @@ const SECTION_ID = '44444444-4444-4444-8444-444444444444';
 const GUARDIAN_ID = '88888888-8888-4888-8888-888888888888';
 const BATCH_ID = '99999999-9999-4999-8999-999999999999';
 const DLR_SECRET = 'correct-horse-battery-staple';
-const institutionRow: InstitutionRow = {
+const institutionRow: Institution = {
   id: INSTITUTION_ID,
   slug: 'demo',
   nameBn: 'ডেমো',
@@ -39,11 +47,11 @@ const institutionRow: InstitutionRow = {
   createdAt: new Date('2026-01-01'),
 };
 
-const batchRow = (overrides: Partial<SmsBatchRow> = {}): SmsBatchRow => ({
+const batchRow = (overrides: Partial<SmsBatch> = {}): SmsBatch => ({
   id: BATCH_ID,
   institutionId: INSTITUTION_ID,
-  purpose: 'general',
-  status: 'draft',
+  purpose: SmsPurpose.General,
+  status: SmsBatchStatus.Draft,
   templateKey: null,
   body: 'Hello',
   dedupeKey: null,
@@ -58,7 +66,7 @@ const batchRow = (overrides: Partial<SmsBatchRow> = {}): SmsBatchRow => ({
   createdAt: new Date(),
   ...overrides,
 });
-const messageRow: SmsMessageRow = {
+const messageRow: SmsMessage = {
   id: 'm1',
   institutionId: INSTITUTION_ID,
   batchId: BATCH_ID,
@@ -68,7 +76,7 @@ const messageRow: SmsMessageRow = {
   body: 'Hello',
   segments: 1,
   costPaisa: 30,
-  status: 'pending',
+  status: SmsMessageStatus.Pending,
   gateway: null,
   providerMessageId: null,
   error: null,
@@ -84,41 +92,41 @@ describe('SMS & consent (e2e)', () => {
   const api = () => request(app.getHttpServer() as Server);
   const body = <T>(res: request.Response): ApiResponse<T> =>
     res.body as ApiResponse<T>;
-  const audience = createMock<AudienceRepository>();
-  const balance = createMock<BalanceRepository>();
-  const batches = createMock<BatchesRepository>();
-  const templates = createMock<TemplatesRepository>();
-  const consent = createMock<ConsentRepository>();
-  const delivery = createMock<DeliveryReportsRepository>();
-  const gateway = createMock<SmsGateway>();
-  const sessions = createMock<SessionsRepository>();
-  const institutions = createMock<InstitutionsRepository>();
+  const audience = createMock<AudienceRepositoryPort>();
+  const balance = createMock<BalanceRepositoryPort>();
+  const batches = createMock<BatchesRepositoryPort>();
+  const templates = createMock<TemplatesRepositoryPort>();
+  const consent = createMock<ConsentRepositoryPort>();
+  const delivery = createMock<DeliveryReportsRepositoryPort>();
+  const gateway = createMock<SmsGatewayPort>();
+  const sessions = createMock<SessionsRepositoryPort>();
+  const institutions = createMock<InstitutionsRepositoryPort>();
 
   beforeAll(async () => {
     process.env.SMS_DELIVERY_REPORT_SECRET = DLR_SECRET;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(AudienceRepository)
+      .overrideProvider(AudienceRepositoryPort)
       .useValue(audience)
-      .overrideProvider(BalanceRepository)
+      .overrideProvider(BalanceRepositoryPort)
       .useValue(balance)
-      .overrideProvider(BatchesRepository)
+      .overrideProvider(BatchesRepositoryPort)
       .useValue(batches)
-      .overrideProvider(TemplatesRepository)
+      .overrideProvider(TemplatesRepositoryPort)
       .useValue(templates)
-      .overrideProvider(ConsentRepository)
+      .overrideProvider(ConsentRepositoryPort)
       .useValue(consent)
-      .overrideProvider(DeliveryReportsRepository)
+      .overrideProvider(DeliveryReportsRepositoryPort)
       .useValue(delivery)
-      .overrideProvider(SMS_GATEWAY)
+      .overrideProvider(SmsGatewayPort)
       .useValue(gateway)
-      .overrideProvider(SessionsRepository)
+      .overrideProvider(SessionsRepositoryPort)
       .useValue(sessions)
-      .overrideProvider(InstitutionsRepository)
+      .overrideProvider(InstitutionsRepositoryPort)
       .useValue(institutions)
-      .overrideProvider(AuditRepository)
-      .useValue(createMock<AuditRepository>())
-      .overrideProvider(DatabaseService)
-      .useValue({})
+      .overrideProvider(AuditLogPort)
+      .useValue(createMock<AuditLogPort>())
+      .overrideProvider(DataSource)
+      .useValue(fakeDataSource())
       .compile();
     app = setupApp(moduleRef.createNestApplication());
     await app.init();
@@ -234,7 +242,9 @@ describe('SMS & consent (e2e)', () => {
 
   it('POST /api/sms/batches/:id/send answers 402 with the shortfall when the balance is short', async () => {
     batches.findById.mockResolvedValue(batchRow());
-    batches.markSending.mockResolvedValue(batchRow({ status: 'sending' }));
+    batches.markSending.mockResolvedValue(
+      batchRow({ status: SmsBatchStatus.Sending }),
+    );
     balance.debit.mockResolvedValue(undefined);
 
     const res = await api()
@@ -251,7 +261,9 @@ describe('SMS & consent (e2e)', () => {
 
   it('POST /api/sms/batches/:id/send delivers and reports which gateway carried each message', async () => {
     batches.findById.mockResolvedValue(batchRow());
-    batches.markSending.mockResolvedValue(batchRow({ status: 'sending' }));
+    batches.markSending.mockResolvedValue(
+      batchRow({ status: SmsBatchStatus.Sending }),
+    );
     balance.debit.mockResolvedValue({
       institutionId: INSTITUTION_ID,
       balancePaisa: 0,
@@ -264,7 +276,7 @@ describe('SMS & consent (e2e)', () => {
       gateway: 'secondary',
     });
     batches.finish.mockResolvedValue(
-      batchRow({ status: 'sent', sentCount: 1 }),
+      batchRow({ status: SmsBatchStatus.Sent, sentCount: 1 }),
     );
 
     const res = await api()
@@ -323,14 +335,14 @@ describe('SMS & consent (e2e)', () => {
   });
 
   it('PUT /api/guardians/:id/consents records consent and GET lists it', async () => {
-    const row = {
+    const row: Consent = {
       id: 'c1',
       institutionId: INSTITUTION_ID,
       guardianId: GUARDIAN_ID,
-      purpose: 'sms' as const,
+      purpose: ConsentPurpose.Sms,
       granted: true,
       noticeVersion: '2026-01',
-      source: 'paper' as const,
+      source: ConsentSource.Paper,
       recordedBy: 'admin',
       note: 'form #12',
       createdAt: new Date(),

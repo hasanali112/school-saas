@@ -13,14 +13,11 @@ class AppEnv {
   PORT: number;
 }
 
-export const appConfig = registerAs(
-  'app',
-  (): AppConfig => {
-    const env = validateConfig(AppEnv, process.env);
-    return {
-      env: env.NODE_ENV,
-      port: env.PORT,
-      isProduction: env.NODE_ENV === NodeEnv.Production,
-    };
-  },
-);
+export const appConfig = registerAs('app', (): AppConfig => {
+  const env = validateConfig(AppEnv, process.env);
+  return {
+    env: env.NODE_ENV,
+    port: env.PORT,
+    isProduction: env.NODE_ENV === NodeEnv.Production,
+  };
+});

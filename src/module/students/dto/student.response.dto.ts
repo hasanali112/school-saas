@@ -1,4 +1,6 @@
-import { StudentRow } from '@database/schema';
+import { Religion } from '@module/academics/domain/subject';
+import { BloodGroup, Gender, StudentStatus } from '../domain/student';
+import type { Student } from '../domain/student';
 
 /** What leaves the API. Mapping here keeps audit columns and internal fields out of responses. */
 export class StudentResponseDto {
@@ -7,40 +9,40 @@ export class StudentResponseDto {
   readonly nameBn: string;
   readonly nameEn: string;
   readonly dateOfBirth: string | null;
-  readonly gender: StudentRow['gender'];
-  readonly bloodGroup: StudentRow['bloodGroup'];
-  readonly religion: StudentRow['religion'];
+  readonly gender: Gender | null;
+  readonly bloodGroup: BloodGroup | null;
+  readonly religion: Religion | null;
   readonly birthCertificateNo: string | null;
   readonly addressBn: string | null;
   readonly addressEn: string | null;
-  readonly status: StudentRow['status'];
+  readonly status: StudentStatus;
   readonly exitedAt: Date | null;
   readonly exitReason: string | null;
   readonly createdAt: Date;
 
-  private constructor(row: StudentRow) {
-    this.id = row.id;
-    this.admissionNo = row.admissionNo;
-    this.nameBn = row.nameBn;
-    this.nameEn = row.nameEn;
-    this.dateOfBirth = row.dateOfBirth;
-    this.gender = row.gender;
-    this.bloodGroup = row.bloodGroup;
-    this.religion = row.religion;
-    this.birthCertificateNo = row.birthCertificateNo;
-    this.addressBn = row.addressBn;
-    this.addressEn = row.addressEn;
-    this.status = row.status;
-    this.exitedAt = row.exitedAt;
-    this.exitReason = row.exitReason;
-    this.createdAt = row.createdAt;
+  private constructor(student: Student) {
+    this.id = student.id;
+    this.admissionNo = student.admissionNo;
+    this.nameBn = student.nameBn;
+    this.nameEn = student.nameEn;
+    this.dateOfBirth = student.dateOfBirth;
+    this.gender = student.gender;
+    this.bloodGroup = student.bloodGroup;
+    this.religion = student.religion;
+    this.birthCertificateNo = student.birthCertificateNo;
+    this.addressBn = student.addressBn;
+    this.addressEn = student.addressEn;
+    this.status = student.status;
+    this.exitedAt = student.exitedAt;
+    this.exitReason = student.exitReason;
+    this.createdAt = student.createdAt;
   }
 
-  static from(row: StudentRow): StudentResponseDto {
-    return new StudentResponseDto(row);
+  static from(student: Student): StudentResponseDto {
+    return new StudentResponseDto(student);
   }
 
-  static fromMany(rows: readonly StudentRow[]): StudentResponseDto[] {
-    return rows.map((row) => StudentResponseDto.from(row));
+  static fromMany(students: readonly Student[]): StudentResponseDto[] {
+    return students.map((student) => StudentResponseDto.from(student));
   }
 }

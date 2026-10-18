@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { databaseConfig } from '@config/database/database.config';
+import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -17,6 +18,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       autoLoadEntities: true,
       synchronize: false,
       logging: false,
+      namingStrategy: new SnakeNamingStrategy(),
       extra: { options: '-c timezone=UTC' },
     };
   }
