@@ -12,7 +12,7 @@ import {
   OTP_TTL_SECONDS,
   TOKEN_TTL_SECONDS,
 } from '../domain/auth.constants';
-import type { AuthUser } from '../domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { JwtPayload } from '../domain/jwt-payload';
 import {
   AuthUserDto,

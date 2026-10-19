@@ -10,9 +10,9 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CurrentUser } from '@module/auth/decorators/current-user.decorator';
-import { Roles } from '@module/auth/decorators/roles.decorator';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import type { AuthUser } from '@common/types/auth-user';
 import { Paginated } from '@common/types/paginated';
 import { CreateStudentDto } from '../dto/create-student.dto';
 import { ExitStudentDto } from '../dto/exit-student.dto';

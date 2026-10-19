@@ -4,8 +4,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import type { LeaveApplication, LeaveType } from '../domain/leave';
 import { ApplicantKind, LeaveAppliesTo, LeaveStatus } from '../domain/leave';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';

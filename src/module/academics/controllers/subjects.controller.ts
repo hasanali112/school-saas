@@ -9,10 +9,10 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { CurrentUser } from '@module/auth/decorators/current-user.decorator';
-import { Roles } from '@module/auth/decorators/roles.decorator';
-import type { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import type { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { AttachClassSubjectDto } from '../dto/attach-class-subject.dto';
 import { CreateSubjectDto } from '../dto/create-subject.dto';
 import {

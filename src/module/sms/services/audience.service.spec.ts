@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 import { createMock, getMock } from '@test/utils/create-mock';
 import type { GuardianRecipient, StaffRecipient } from '../domain/audience';
 import { AudienceRepository } from '../application/ports/audience.repository.port';

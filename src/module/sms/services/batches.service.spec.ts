@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { todayLocal } from '@module/time/domain/local-date';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import type { Institution } from '@module/institutions/domain/institution';
 import type { NewSmsBatch, SmsBatch, SmsMessage } from '../domain/sms-batch';
 import { SessionsFacade } from '@module/academics/services/sessions.facade';

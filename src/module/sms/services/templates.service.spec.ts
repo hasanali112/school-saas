@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import type { SmsTemplate } from '../domain/sms-template';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { DEFAULT_TEMPLATES } from '../domain/default-templates';

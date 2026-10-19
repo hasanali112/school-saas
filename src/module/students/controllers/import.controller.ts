@@ -13,9 +13,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { CurrentUser } from '@module/auth/decorators/current-user.decorator';
-import { Roles } from '@module/auth/decorators/roles.decorator';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import type { AuthUser } from '@common/types/auth-user';
 import { STUDENT_WRITE_ROLES } from './student-roles';
 import { ImportQueryDto } from '../dto/import-query.dto';
 import { ImportSummaryDto } from '../dto/import-summary.response.dto';

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { isUniqueViolation } from '@common/services/database/database-errors';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { AcademicSession } from '../domain/academic-session';
 import { SessionResponseDto } from '../dto/academics.response.dto';
 import { CreateSessionDto } from '../dto/create-session.dto';

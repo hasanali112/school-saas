@@ -4,8 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { isForeignKeyViolation } from '@common/services/database/database-errors';
-import type { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import type { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import {
   AssignClassTeacherDto,
   AssignTeacherDto,

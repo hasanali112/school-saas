@@ -7,7 +7,7 @@ import {
   IsUUID,
   Matches,
 } from 'class-validator';
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 import { BD_PHONE_REGEX } from '@common/utils/phone/phone';
 import type { AudienceSelection } from '../domain/audience';
 

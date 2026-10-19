@@ -8,7 +8,7 @@ import { paginate, Paginated } from '@common/types/paginated';
 import { mapWithConcurrency } from '@common/utils/concurrency/map-with-concurrency';
 import { SessionsFacade } from '@module/academics/services/sessions.facade';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { InstitutionsFacade } from '@module/institutions/services/institutions.facade';
 import { ClockPort } from '@module/time/application/ports/clock.port';
 import type { AudienceSelection } from '../domain/audience';

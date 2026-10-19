@@ -10,10 +10,10 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CurrentUser } from '@module/auth/decorators/current-user.decorator';
-import { Roles } from '@module/auth/decorators/roles.decorator';
-import type { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import type { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { CreateHolidayDto, HolidaysQueryDto } from '../dto/create-holiday.dto';
 import { HolidayResponseDto } from '../dto/setup.response.dto';
 import { HolidaysFacade } from '../services/holidays.facade';

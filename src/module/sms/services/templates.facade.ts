@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { UpsertTemplateDto } from '../dto/template.dto';
 import { TemplateResponseDto } from '../dto/template.response.dto';
 import { TemplatesService } from './templates.service';

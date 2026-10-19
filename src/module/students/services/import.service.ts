@@ -4,7 +4,7 @@ import { validate, ValidationError } from 'class-validator';
 import type { SectionRef } from '@module/academics/domain/school-class';
 import { ClassesFacade } from '@module/academics/services/classes.facade';
 import { SessionsFacade } from '@module/academics/services/sessions.facade';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { rollKey, sectionKey } from '../domain/import';
 import type {
   ExistingRefs,

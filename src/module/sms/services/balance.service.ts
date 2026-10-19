@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { smsConfig } from '@config/sms/sms.config';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { BalanceView } from '../domain/sms-balance';
 import { TopUpDto } from '../dto/balance.dto';
 import {

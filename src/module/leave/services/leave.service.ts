@@ -10,8 +10,8 @@ import {
   isUniqueViolation,
 } from '@common/services/database/database-errors';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
-import type { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import type { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { EventPublisherPort } from '@module/events/application/ports/event-publisher.port';
 import {
   ApplicantKind,

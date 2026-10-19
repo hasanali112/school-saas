@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { isUniqueViolation } from '@common/services/database/database-errors';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { Shift } from '../domain/shift';
 import { ShiftResponseDto } from '../dto/academics.response.dto';
 import { CreateShiftDto } from '../dto/create-shift.dto';

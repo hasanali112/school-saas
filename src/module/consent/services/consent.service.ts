@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { isForeignKeyViolation } from '@common/services/database/database-errors';
 import type { AuditSnapshot } from '@module/audit/domain/audit-entry';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { Consent } from '../domain/consent';
 import { CURRENT_NOTICE_VERSION } from '../domain/consent.constants';
 import { RecordConsentDto } from '../dto/consent.dto';

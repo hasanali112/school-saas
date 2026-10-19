@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthUser } from '../domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import {
   AuthUserDto,
   OtpRequestedDto,

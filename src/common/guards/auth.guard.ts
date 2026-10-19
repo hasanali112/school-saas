@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Public } from '../decorators/public.decorator';
-import type { AuthenticatedRequest } from '../middleware/authenticated-request';
+import type { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

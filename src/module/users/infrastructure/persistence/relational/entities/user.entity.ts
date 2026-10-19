@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 import { UserStatus } from '../../../../domain/user';
 
 @Entity('users')

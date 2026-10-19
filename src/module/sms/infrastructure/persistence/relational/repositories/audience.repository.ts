@@ -3,7 +3,7 @@ import { ArrayOverlap } from 'typeorm';
 import { DatabaseService } from '@common/services/database/database.service';
 import { SchoolClassEntity } from '@module/academics/infrastructure/persistence/relational/entities/school-class.entity';
 import { SectionEntity } from '@module/academics/infrastructure/persistence/relational/entities/section.entity';
-import type { Role } from '@module/auth/domain/role';
+import type { Role } from '@common/types/role';
 import { ConsentPurpose } from '@module/consent/domain/consent';
 import { ConsentEntity } from '@module/consent/infrastructure/persistence/relational/entities/consent.entity';
 import { StudentStatus } from '@module/students/domain/student';

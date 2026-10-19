@@ -30,8 +30,8 @@ import { UsersModule } from '@module/users/users.module';
 import { InstitutionsModule } from '@module/institutions/institutions.module';
 import { HealthModule } from '@module/health/health.module';
 import { AuthModule } from '@module/auth/auth.module';
-import { AuthGuard } from '@module/auth/guards/auth.guard';
-import { RolesGuard } from '@module/auth/guards/roles.guard';
+import { AuthGuard } from '@common/guards/auth.guard';
+import { RolesGuard } from '@common/guards/roles.guard';
 
 const ONE_MINUTE_MS = 60_000;
 /** Per-IP requests per minute; credential and callback routes set their own. */

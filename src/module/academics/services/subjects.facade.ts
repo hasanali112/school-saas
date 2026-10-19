@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { OfferedSubject } from '../domain/subject';
 import { AttachClassSubjectDto } from '../dto/attach-class-subject.dto';
 import { CreateSubjectDto } from '../dto/create-subject.dto';

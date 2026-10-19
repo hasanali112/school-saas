@@ -8,7 +8,7 @@ import {
   isForeignKeyViolation,
   isUniqueViolation,
 } from '@common/services/database/database-errors';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import {
   GuardianChildDto,
   StudentGuardianResponseDto,

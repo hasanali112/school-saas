@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { Public } from '@module/auth/decorators/public.decorator';
+import { Public } from '@common/decorators/public.decorator';
 
 export interface HealthStatus {
   status: 'ok';

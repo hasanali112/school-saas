@@ -87,8 +87,9 @@ Rules that keep it clean:
 - Guards are global (`ThrottlerGuard`, `AuthGuard`, `RolesGuard`, in that order). `JwtAuthMiddleware`
   (auth module, every route) verifies the bearer token through `AuthFacade`, sets `req.user` and opens the
   tenant context; a bad token leaves the request anonymous, so `AuthGuard` answers 401. Use `@Public()` for
-  open routes and `@Roles([...])` for role gates, both from `@module/auth/decorators`. Resource-level checks
-  (own section, own child) go in services. Roles are the `Role` enum in `@module/auth/domain/role`;
+  open routes and `@Roles([...])` for role gates, both from `@common/decorators` (the guards live in
+  `@common/guards`). Resource-level checks (own section, own child) go in services. Roles are the `Role`
+  enum in `@common/types/role`;
   validate request DTOs with `@IsEnum(Role, { each: true })`.
 - Review conventions (apply everywhere): closed sets of named values (roles, statuses, kinds, purposes)
   are TypeScript `enum`s owned by their module's `domain/`; `as const` objects are only for data tables
@@ -99,7 +100,8 @@ Rules that keep it clean:
   (no `readonly`); a type is an `interface`/`type`, never a class, except ports, which are abstract classes
   so they can be DI tokens. Helper functions used by one class are `private` methods of that class.
   Nothing domain-specific lives in `common/` (owning module, or the shared kernel when several modules need
-  it). Follow the framework's documented way before inventing a wrapper. Tests use typed fixtures and the
+  it); the one exception is the auth plumbing every controller uses: `common/guards`, `common/decorators`
+  (`@Public`, `@Roles`, `@CurrentUser`) and `common/types` (`Role`, `AuthUser`, `AuthenticatedRequest`). Follow the framework's documented way before inventing a wrapper. Tests use typed fixtures and the
   helpers in `test/utils`, never `as never`, `as object` or `as unknown as`.
 - Config: each `src/config/<name>/<name>.config.ts` is a `registerAs` factory that validates its own env
   class through the generic `validateConfig` (`@common/utils/validate/validate-config`, throws

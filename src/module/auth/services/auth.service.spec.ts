@@ -6,7 +6,7 @@ import type { User } from '@module/users/domain/user';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { OTP_MAX_ATTEMPTS } from '../domain/auth.constants';
 import type { OtpCode } from '../domain/otp-code';
-import { Role } from '../domain/role';
+import { Role } from '@common/types/role';
 import { AuthRepository } from '../application/ports/auth.repository.port';
 import { OtpSenderPort } from '../application/ports/otp-sender.port';
 import { PasswordHasherPort } from '../application/ports/password-hasher.port';

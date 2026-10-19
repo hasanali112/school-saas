@@ -1,7 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { ClockPort } from '@module/time/application/ports/clock.port';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { anyOf } from '@test/utils/matchers';

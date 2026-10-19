@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { isUniqueViolation } from '@common/services/database/database-errors';
 import { paginate, Paginated } from '@common/types/paginated';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { EventPublisherPort } from '@module/events/application/ports/event-publisher.port';
 import { ClockPort } from '@module/time/application/ports/clock.port';
 import { StudentStatus } from '../domain/student';

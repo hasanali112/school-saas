@@ -8,10 +8,10 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { CurrentUser } from '@module/auth/decorators/current-user.decorator';
-import { Roles } from '@module/auth/decorators/roles.decorator';
-import type { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Roles } from '@common/decorators/roles.decorator';
+import type { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { SessionResponseDto } from '../dto/academics.response.dto';
 import { CreateSessionDto } from '../dto/create-session.dto';
 import { SessionsFacade } from '../services/sessions.facade';

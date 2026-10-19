@@ -1,5 +1,5 @@
 import type { User } from '@module/users/domain/user';
-import { Role } from '../domain/role';
+import { Role } from '@common/types/role';
 
 export class AuthUserDto {
   readonly id: string;

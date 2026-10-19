@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { CreateHolidayDto, HolidaysQueryDto } from '../dto/create-holiday.dto';
 import { HolidayResponseDto } from '../dto/setup.response.dto';
 import { HolidaysService } from './holidays.service';

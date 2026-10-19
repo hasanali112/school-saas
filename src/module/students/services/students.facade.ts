@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Paginated } from '@common/types/paginated';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { CreateStudentDto } from '../dto/create-student.dto';
 import { ExitStudentDto } from '../dto/exit-student.dto';
 import { ListStudentsQueryDto } from '../dto/list-students-query.dto';

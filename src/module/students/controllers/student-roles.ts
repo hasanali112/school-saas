@@ -1,4 +1,4 @@
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 
 export const STUDENT_READ_ROLES = [
   Role.InstituteHead,

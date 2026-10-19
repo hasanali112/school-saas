@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtPayload } from '../../domain/jwt-payload';
-import { Role } from '../../domain/role';
+import { Role } from '@common/types/role';
 import { TokenSignerPort } from '../../application/ports/token-signer.port';
 
 const ROLES = new Set<string>(Object.values(Role));

@@ -7,9 +7,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { CurrentUser } from '../decorators/current-user.decorator';
-import { Public } from '../decorators/public.decorator';
-import type { AuthUser } from '../domain/auth-user';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { Public } from '@common/decorators/public.decorator';
+import type { AuthUser } from '@common/types/auth-user';
 import {
   AuthUserDto,
   OtpRequestedDto,

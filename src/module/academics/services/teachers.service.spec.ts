@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import type { SectionClassTeacher } from '../domain/teacher-assignment';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { SessionsService } from './sessions.service';

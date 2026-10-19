@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { DEFAULT_TEMPLATES } from '../domain/default-templates';
 import type { DefaultTemplateKey } from '../domain/default-templates';
 import { isKnownMergeField } from '../domain/merge-fields';

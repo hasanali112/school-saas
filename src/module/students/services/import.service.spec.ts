@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Workbook } from 'exceljs';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { ClassesFacade } from '@module/academics/services/classes.facade';
 import { SessionsFacade } from '@module/academics/services/sessions.facade';
 import { createMock, getMock } from '@test/utils/create-mock';

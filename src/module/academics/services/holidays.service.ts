@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { isUniqueViolation } from '@common/services/database/database-errors';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { ClockPort } from '@module/time/application/ports/clock.port';
 import type { Holiday } from '../domain/holiday';
 import { CreateHolidayDto, HolidaysQueryDto } from '../dto/create-holiday.dto';

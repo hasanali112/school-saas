@@ -12,7 +12,7 @@ import { ClassSubjectRole } from '@module/academics/domain/subject';
 import type { OfferedSubject } from '@module/academics/domain/subject';
 import { SessionsFacade } from '@module/academics/services/sessions.facade';
 import { SubjectsFacade } from '@module/academics/services/subjects.facade';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { Enrolment, RosterEntry } from '../domain/enrolment';
 import { StudentStatus } from '../domain/student';
 import type { Student } from '../domain/student';

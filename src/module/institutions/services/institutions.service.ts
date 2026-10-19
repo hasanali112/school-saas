@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { isUniqueViolation } from '@common/services/database/database-errors';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import type { Institution } from '../domain/institution';
 import { InstitutionResponseDto } from '../dto/institution.response.dto';
 import { UpdateInstitutionDto } from '../dto/update-institution.dto';

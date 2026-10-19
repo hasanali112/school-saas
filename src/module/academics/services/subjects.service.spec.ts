@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DatabaseError } from 'pg';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import type { Subject } from '../domain/subject';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { ClassSubjectRole, Religion, SubjectKind } from '../domain/subject';

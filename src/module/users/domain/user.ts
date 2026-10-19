@@ -1,4 +1,4 @@
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 
 export enum UserStatus {
   Active = 'active',

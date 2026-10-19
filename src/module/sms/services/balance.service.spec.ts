@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { smsConfig } from '@config/sms/sms.config';
 import type { SmsBalance } from '../domain/sms-balance';
 import { AuditLogPort } from '@module/audit/application/ports/audit-log.port';

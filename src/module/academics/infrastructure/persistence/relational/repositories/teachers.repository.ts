@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '@common/services/database/database.service';
-import type { Role } from '@module/auth/domain/role';
+import type { Role } from '@common/types/role';
 import { UserEntity } from '@module/users/infrastructure/persistence/relational/entities/user.entity';
 import type {
   NewSectionClassTeacher,

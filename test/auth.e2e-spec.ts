@@ -4,7 +4,7 @@ import type { Server } from 'node:http';
 import request from 'supertest';
 import { ScryptPasswordHasher } from '@module/auth/infrastructure/adapters/scrypt.password-hasher';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
 import { UserStatus } from '@module/users/domain/user';

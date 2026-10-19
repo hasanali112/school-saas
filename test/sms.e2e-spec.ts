@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { ApiResponse } from '@common/types/api-response';
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 import { DataSource } from 'typeorm';
 import { fakeDataSource } from '@test/utils/fake-data-source';
 import type { Institution } from '@module/institutions/domain/institution';

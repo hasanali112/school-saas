@@ -1,4 +1,4 @@
-import { Role } from '@module/auth/domain/role';
+import { Role } from '@common/types/role';
 
 /** Who may compose, send and read the SMS log. */
 export const SMS_OPERATORS = [Role.InstituteHead, Role.AdminOfficer];

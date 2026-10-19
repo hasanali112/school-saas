@@ -2,7 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Response } from 'express';
 import { tenantContext } from '@common/services/database/tenant-context';
 import { AuthFacade } from '../services/auth.facade';
-import type { AuthenticatedRequest } from './authenticated-request';
+import type { AuthenticatedRequest } from '@common/types/authenticated-request';
 
 const BEARER = /^Bearer\s+(.+)$/i;
 

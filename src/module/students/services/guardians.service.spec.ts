@@ -1,8 +1,8 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DatabaseError } from 'pg';
-import { AuthUser } from '@module/auth/domain/auth-user';
-import { Role } from '@module/auth/domain/role';
+import { AuthUser } from '@common/types/auth-user';
+import { Role } from '@common/types/role';
 import { createMock, getMock } from '@test/utils/create-mock';
 import { GuardianRelation } from '../domain/guardian';
 import { GuardiansRepository } from '../application/ports/guardians.repository.port';

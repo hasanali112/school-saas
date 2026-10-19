@@ -7,7 +7,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { Public } from '@module/auth/decorators/public.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { DeliveryReportDto } from '../dto/delivery-report.dto';
 import { DeliveryReportsFacade } from '../services/delivery-reports.facade';
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthUser } from '@module/auth/domain/auth-user';
+import type { AuthUser } from '@common/types/auth-user';
 import { RecordConsentDto } from '../dto/consent.dto';
 import { ConsentResponseDto } from '../dto/consent.response.dto';
 import { ConsentService } from './consent.service';

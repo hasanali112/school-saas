@@ -1,4 +1,4 @@
-import type { Role } from '@module/auth/domain/role';
+import type { Role } from '@common/types/role';
 import type { MergeValues } from './template-render';
 
 export interface GuardianFilter {

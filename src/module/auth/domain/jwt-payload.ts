@@ -1,4 +1,4 @@
-import { Role } from './role';
+import { Role } from '@common/types/role';
 
 export interface JwtPayload {
   sub: string;
